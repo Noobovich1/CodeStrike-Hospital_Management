@@ -52,4 +52,8 @@ public class Patient {
 
     @Column(name = "current_treatment_notes", columnDefinition = "TEXT")
     private String currentTreatmentNotes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private PatientStatus status = PatientStatus.OUTPATIENT;
 }
