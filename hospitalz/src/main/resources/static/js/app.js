@@ -6,6 +6,9 @@ const displayRole = document.getElementById('display-role');
 const themeToggle = document.getElementById('theme-toggle');
 const contentArea = document.getElementById('content-area');
 const pageTitle = document.getElementById('page-title');
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
 
 // Role Configurations based on the provided table
 const roleConfig = {
@@ -159,10 +162,42 @@ function logout() {
     window.location.href = '/auth.html';
 }
 
+// --- Responsive UI ---
+function initResponsiveUI() {
+    if (mobileMenuBtn && sidebar && sidebarOverlay) {
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Close sidebar on window resize if moving to larger screen
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 767) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            }
+        });
+        
+        // Auto close sidebar when an item is clicked on mobile
+        sidebarNav.addEventListener('click', (e) => {
+            if (window.innerWidth <= 767 && e.target.closest('a.nav-item')) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            }
+        });
+    }
+}
+
 // --- Initialization ---
 function init() {
     
     initTheme();
+    initResponsiveUI();
     
     // Setup Role Switcher
     roleSelect.value = currentRole;
@@ -177,6 +212,12 @@ function init() {
             loadModule(firstModule.id, firstModule.label);
         }
     });
+
+    // Setup Logout
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
     
     // Initial render
     renderSidebar();
