@@ -135,9 +135,33 @@ async function loadModule(moduleId, moduleTitle) {
         contentArea.innerHTML = `<div class="glass-panel" style="padding: 20px; color: var(--status-danger);">Error loading module: ${error.message}</div>`;
     }
 }
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/auth.html';
+        return false;
+    }
+    
+    // Lấy thông tin từ localStorage để hiển thị UI
+    currentRole = localStorage.getItem('role') || 'PATIENT';
+    const username = localStorage.getItem('username');
+    
+    // Cập nhật tên hiển thị trên sidebar
+    document.querySelector('.user-name').textContent = username;
+    document.getElementById('display-role').textContent = currentRole;
+    
+    return true;
+}
+
+// Thêm nút Logout trong Sidebar UI (tùy chọn) hoặc JS
+function logout() {
+    localStorage.clear();
+    window.location.href = '/auth.html';
+}
 
 // --- Initialization ---
 function init() {
+    
     initTheme();
     
     // Setup Role Switcher
