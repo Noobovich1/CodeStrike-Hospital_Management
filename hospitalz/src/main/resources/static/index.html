@@ -1,4 +1,4 @@
-~<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -15,6 +15,9 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -33,6 +36,9 @@
                         <span class="user-name">Admin User</span>
                         <span class="user-role" id="display-role">ADMIN</span>
                     </div>
+                    <button id="logout-btn" class="logout-btn" title="Logout">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </button>
                 </div>
             </div>
         </aside>
@@ -42,6 +48,9 @@
             <!-- Topbar -->
             <header class="topbar">
                 <div class="topbar-left">
+                    <button id="mobile-menu-btn" class="mobile-menu-btn" title="Toggle Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
                     <h1 id="page-title">Dashboard</h1>
                 </div>
                 <div class="topbar-right">
