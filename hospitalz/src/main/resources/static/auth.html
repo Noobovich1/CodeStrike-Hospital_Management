@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hospitalz - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .login-container {
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: var(--bg-primary);
+        }
+        .login-box { width: 400px; padding: 40px; }
+        .form-group { margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 8px; }
+        button { width: 100%; padding: 12px; background: var(--accent-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="glass-panel login-box">
+            <h2 style="text-align: center; margin-bottom: 30px;">Hospitalz Login</h2>
+            <div id="error-msg" style="color: red; margin-bottom: 10px; display: none;"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required placeholder="admin_system">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="pass">
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Lưu thông tin vào LocalStorage
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('role', data.role);
+                    localStorage.setItem('username', data.username);
+                    // Chuyển hướng về trang chủ
+                    window.location.href = '/index.html';
+                } else {
+                    document.getElementById('error-msg').innerText = "Sai tài khoản hoặc mật khẩu!";
+                    document.getElementById('error-msg').style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>
