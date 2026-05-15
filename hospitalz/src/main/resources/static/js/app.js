@@ -17,7 +17,9 @@ const roleConfig = {
         menu: [
             { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
             { id: 'staff', icon: 'fa-users-gear', label: 'Staff Management' },
-            { id: 'reports', icon: 'fa-file-lines', label: 'Reports' }
+            { id: 'rooms', icon: 'fa-door-open', label: 'Room Management' },
+            { id: 'register', icon: 'fa-address-card', label: 'Patient Management' },
+            { id: 'reports', icon: 'fa-file-lines', label: 'Billing & Reports' }
         ]
     },
     DOCTOR: {
@@ -115,23 +117,53 @@ async function loadModule(moduleId, moduleTitle) {
     contentArea.innerHTML = `<div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>`;
     
     try {
-        // Dynamically import the module if it exists
-        // Since we don't have a bundler, we'll simulate loading
-        if (currentRole === 'ADMIN' && moduleId === 'dashboard') {
-            const { renderAdminDashboard } = await import('./modules/admin.js');
+        let module;
+        let renderFunction;
+
+        switch (moduleId) {
+            case 'dashboard':
+                module = await import('./modules/admin.js');
+                renderFunction = module.renderAdminDashboard;
+                break;
+            case 'staff':
+                module = await import('./modules/staff.js');
+                renderFunction = module.renderStaffList;
+                break;
+            case 'rooms':
+                module = await import('./modules/rooms.js');
+                renderFunction = module.renderRoomList;
+                break;
+            case 'register':
+                module = await import('./modules/patients.js');
+                renderFunction = module.renderRegisterForm;
+                break;
+            case 'my-patients':
+                module = await import('./modules/patients.js');
+                renderFunction = module.renderDoctorPatientList;
+                break;
+            case 'ward-patients':
+                module = await import('./modules/admissions.js');
+                renderFunction = module.renderActiveAdmissions;
+                break;
+            case 'prescriptions':
+                module = await import('./modules/treatments.js');
+                renderFunction = module.renderTreatments;
+                break;
+            case 'my-bills':
+            case 'reports': // Reusing reports tab for billing management for now
+                module = await import('./modules/billing.js');
+                renderFunction = module.renderBilling;
+                break;
+            // Add other module cases as they are implemented
+            default:
+                contentArea.innerHTML = `<div class="glass-panel" style="padding: 20px;">Module <strong>${moduleId}</strong> is not yet implemented.</div>`;
+                return;
+        }
+
+        if (renderFunction) {
+            const content = await renderFunction();
             contentArea.innerHTML = '';
-            contentArea.appendChild(renderAdminDashboard());
-        } else {
-            // Mock UI for un-implemented modules
-            setTimeout(() => {
-                contentArea.innerHTML = `
-                    <div class="glass-panel" style="padding: 40px; text-align: center;">
-                        <i class="fa-solid fa-person-digging" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 20px;"></i>
-                        <h2 style="margin-bottom: 10px;">${moduleTitle} Module</h2>
-                        <p style="color: var(--text-secondary);">This module is currently under development or mocked for the <strong>${roleConfig[currentRole].name}</strong> role.</p>
-                    </div>
-                `;
-            }, 500);
+            contentArea.appendChild(content);
         }
     } catch (error) {
         console.error("Error loading module:", error);
@@ -150,8 +182,8 @@ function checkAuth() {
     const username = localStorage.getItem('username');
     
     // Cập nhật tên hiển thị trên sidebar
-    document.querySelector('.user-name').textContent = username;
-    document.getElementById('display-role').textContent = currentRole;
+    document.querySelector('.user-name').textContent = username || 'User';
+    document.getElementById('display-role').textContent = roleConfig[currentRole]?.name || currentRole;
     
     return true;
 }
@@ -195,6 +227,7 @@ function initResponsiveUI() {
 
 // --- Initialization ---
 function init() {
+    if (!checkAuth()) return;
     
     initTheme();
     initResponsiveUI();

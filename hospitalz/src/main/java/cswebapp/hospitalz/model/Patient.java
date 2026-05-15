@@ -25,7 +25,6 @@ public class Patient {
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Gender gender;
 
@@ -53,7 +52,6 @@ public class Patient {
     @Column(name = "current_treatment_notes", columnDefinition = "TEXT")
     private String currentTreatmentNotes;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private PatientStatus status = PatientStatus.OUTPATIENT;
 }

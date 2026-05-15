@@ -21,7 +21,6 @@ public class Room {
     @Column(name = "room_number", unique = true, nullable = false, length = 20)
     private String roomNumber;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "room_type", nullable = false)
     private RoomType roomType;
 
@@ -39,7 +38,6 @@ public class Room {
     @Column(name = "daily_rate", nullable = false)
     private Double dailyRate;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private RoomStatus status = RoomStatus.AVAILABLE;
 
