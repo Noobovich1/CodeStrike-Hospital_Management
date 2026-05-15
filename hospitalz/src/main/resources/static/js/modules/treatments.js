@@ -92,8 +92,8 @@ async function loadMasterTreatments(container) {
         tbody.innerHTML = treatments.map(t => `
             <tr style="border-bottom: 1px solid var(--border-color);">
             <td style="padding: 12px;">${t.treatmentId}</td>
-            <td style="padding: 12px; font-weight: 500;">${t.name}</td>   // ← was t.treatmentName
-            <td style="padding: 12px;">$${t.unitCost}</td>                // ← was t.cost
+            <td style="padding: 12px; font-weight: 500;">${t.name}</td>
+            <td style="padding: 12px;">$${t.unitCost}</td>
             <td style="padding: 12px; color: var(--text-secondary);">${t.description || '-'}</td>
             </tr>
         `).join('');
