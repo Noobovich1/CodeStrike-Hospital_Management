@@ -245,8 +245,8 @@ async function showPatientDetails(patientId, container) {
                 <tbody>
                     ${treatments.length > 0 ? treatments.map(tr => `
                         <tr style="border-bottom: 1px solid var(--border-color);">
-                            <td style="padding: 8px;">${new Date(tr.recordDate).toLocaleDateString()}</td>
-                            <td style="padding: 8px;">${tr.treatment?.treatmentName} (Qty: ${tr.quantity})</td>
+                            <td style="padding: 8px;">${new Date(tr.sessionDate).toLocaleDateString()}</td>  // ← was tr.recordDate
+                            <td style="padding: 8px;">${tr.treatment?.name} (Qty: ${tr.quantity})</td>       // ← was tr.treatment?.treatmentName
                             <td style="padding: 8px;">${tr.doctor?.fullName || '-'}</td>
                         </tr>
                     `).join('') : '<tr><td colspan="3" style="padding: 8px; text-align: center;">No treatments recorded</td></tr>'}

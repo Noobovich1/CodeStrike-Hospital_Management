@@ -236,14 +236,11 @@ function init() {
     roleSelect.value = currentRole;
     roleSelect.addEventListener('change', (e) => {
         currentRole = e.target.value;
+        Object.keys(moduleCache).forEach(k => delete moduleCache[k]); // ← clear cache on role switch
         displayRole.textContent = roleConfig[currentRole].name;
         renderSidebar();
-        
-        // Auto load first module of the new role
         const firstModule = roleConfig[currentRole].menu[0];
-        if (firstModule) {
-            loadModule(firstModule.id, firstModule.label);
-        }
+        if (firstModule) loadModule(firstModule.id, firstModule.label);
     });
 
     // Setup Logout
@@ -255,6 +252,36 @@ function init() {
     // Initial render
     renderSidebar();
     loadModule('dashboard', 'Dashboard');
+}
+
+const moduleCache = {};
+
+async function loadModule(moduleId, moduleTitle) {
+    pageTitle.textContent = moduleTitle;
+    
+    // If already cached, reuse it — no API call
+    if (moduleCache[moduleId]) {
+        contentArea.innerHTML = '';
+        contentArea.appendChild(moduleCache[moduleId]);
+        return;
+    }
+
+    contentArea.innerHTML = <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>;
+    
+    try {
+        let module;
+        let renderFunction;
+        // ... existing switch statement stays the same ...
+
+        if (renderFunction) {
+            const content = await renderFunction();
+            moduleCache[moduleId] = content;  // ← cache it
+            contentArea.innerHTML = '';
+            contentArea.appendChild(content);
+        }
+    } catch (error) {
+        contentArea.innerHTML = <div class="glass-panel" style="padding: 20px; color: var(--status-danger);">Error: ${error.message}</div>;
+    }
 }
 
 // Start app
