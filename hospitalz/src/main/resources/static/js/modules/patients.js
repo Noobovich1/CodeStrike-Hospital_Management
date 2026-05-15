@@ -128,7 +128,11 @@ function renderPatientTable(patientList, container) {
                 </span>
             </td>
             <td style="padding: 12px;">
-                <button class="btn btn-view-patient" data-id="${p.patientId}" style="padding: 4px 8px; border-radius: 4px; cursor: pointer; border: 1px solid var(--border-color);">View</button>
+                <div class="action-group">
+                    <button class="btn-icon btn-icon-view btn-view-patient" data-id="${p.patientId}" title="View Details">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');

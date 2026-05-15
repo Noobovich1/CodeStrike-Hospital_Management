@@ -52,7 +52,7 @@ export async function renderAdminDashboard() {
                 <canvas id="occupancyChart"></canvas>
             </div>
             <div class="glass-panel" style="padding: 24px;">
-                <h3 style="margin-bottom: 20px; font-weight: 600;">Revenue (Mock Trend)</h3>
+                <h3 style="margin-bottom: 20px; font-weight: 600;">Revenue (Làm ccj để tính revenue đi nha)</h3>
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
@@ -73,15 +73,14 @@ export async function renderAdminDashboard() {
 
 async function loadDashboardData(container) {
     try {
-        // Fetch data
-        const [admissions, rooms, staff, bills] = await Promise.all([
+        // Fetch all data in parallel for maximum speed
+        const [admissions, rooms, staff, bills, doctors] = await Promise.all([
             api.get('/admissions/active').catch(() => []),
             api.get('/rooms').catch(() => []),
             api.get('/staff').catch(() => []),
-            api.get('/bills').catch(() => [])
+            api.get('/bills').catch(() => []),
+            api.get('/doctors').catch(() => [])
         ]);
-
-        const doctors = await api.get('/doctors').catch(() => []);
 
         // Update stats
         container.querySelector('#stat-admissions').textContent = admissions.length;

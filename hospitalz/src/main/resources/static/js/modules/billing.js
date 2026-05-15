@@ -136,9 +136,21 @@ async function loadBillsData(container, isAdmin) {
                 <td style="padding: 12px; color: var(--status-danger); font-weight: bold;">$${balance.toFixed(2)}</td>
                 <td style="padding: 12px;">${b.paymentStatus}</td>
                 <td style="padding: 12px;">
-                    <button class="btn btn-view-bill" data-id="${b.billId}" style="padding: 4px 8px; border-radius: 4px; cursor: pointer; border: 1px solid var(--border-color);">View</button>
-                    ${!isPatient && b.paymentStatus !== 'PAID' ? `<button class="btn btn-pay-bill" data-id="${b.billId}" style="padding: 4px 8px; background: var(--status-success); color: white; border: none; border-radius: 4px; cursor: pointer;">Pay</button>` : ''}
-                    ${isAdmin && b.paymentStatus !== 'PAID' ? `<button class="btn btn-disc-bill" data-id="${b.billId}" style="padding: 4px 8px; background: var(--status-warning); color: white; border: none; border-radius: 4px; cursor: pointer;">Disc.</button>` : ''}
+                    <div class="action-group">
+                        <button class="btn-icon btn-icon-view btn-view-bill" data-id="${b.billId}" title="View Details">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        ${!isPatient && b.paymentStatus !== 'PAID' ? `
+                            <button class="btn-icon btn-icon-pay btn-pay-bill" data-id="${b.billId}" title="Record Payment">
+                                <i class="fa-solid fa-wallet"></i>
+                            </button>
+                        ` : ''}
+                        ${isAdmin && b.paymentStatus !== 'PAID' ? `
+                            <button class="btn-icon btn-icon-discount btn-disc-bill" data-id="${b.billId}" title="Apply Discount">
+                                <i class="fa-solid fa-tag"></i>
+                            </button>
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `}).join('');
