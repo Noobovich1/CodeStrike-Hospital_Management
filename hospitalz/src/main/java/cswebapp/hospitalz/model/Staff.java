@@ -20,7 +20,6 @@ public class Staff {
     @Column(name = "full_name", nullable = false, length = 255)
     private String fullName;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StaffRole role;
 
@@ -31,7 +30,6 @@ public class Staff {
     @Column(name = "assigned_ward", length = 100)
     private String assignedWard;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "shift")
     private Shift shift;
 

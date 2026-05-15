@@ -37,7 +37,6 @@ public class Admission {
     @Column(name = "total_days")
     private Integer totalDays;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private AdmissionStatus status = AdmissionStatus.ACTIVE;
 

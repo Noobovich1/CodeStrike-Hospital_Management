@@ -55,7 +55,6 @@ public class Bill {
     @Column(name = "total_amount", nullable = false)
     private Double totalAmount;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
