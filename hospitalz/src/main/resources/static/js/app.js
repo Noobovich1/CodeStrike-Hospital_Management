@@ -112,10 +112,18 @@ function renderSidebar() {
 }
 
 // --- Content Loading ---
+const moduleCache = {};
 async function loadModule(moduleId, moduleTitle) {
     pageTitle.textContent = moduleTitle;
     contentArea.innerHTML = `<div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>`;
     
+    // If already cached, reuse it — no API call
+    if (moduleCache[moduleId]) {
+        contentArea.innerHTML = '';
+        contentArea.appendChild(moduleCache[moduleId]);
+        return;
+    }
+
     try {
         let module;
         let renderFunction;
@@ -162,6 +170,7 @@ async function loadModule(moduleId, moduleTitle) {
 
         if (renderFunction) {
             const content = await renderFunction();
+            moduleCache[moduleId] = content;  // ← cache it
             contentArea.innerHTML = '';
             contentArea.appendChild(content);
         }
@@ -170,6 +179,7 @@ async function loadModule(moduleId, moduleTitle) {
         contentArea.innerHTML = `<div class="glass-panel" style="padding: 20px; color: var(--status-danger);">Error loading module: ${error.message}</div>`;
     }
 }
+
 function checkAuth() {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -252,36 +262,6 @@ function init() {
     // Initial render
     renderSidebar();
     loadModule('dashboard', 'Dashboard');
-}
-
-const moduleCache = {};
-
-async function loadModule(moduleId, moduleTitle) {
-    pageTitle.textContent = moduleTitle;
-    
-    // If already cached, reuse it — no API call
-    if (moduleCache[moduleId]) {
-        contentArea.innerHTML = '';
-        contentArea.appendChild(moduleCache[moduleId]);
-        return;
-    }
-
-    contentArea.innerHTML = <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>;
-    
-    try {
-        let module;
-        let renderFunction;
-        // ... existing switch statement stays the same ...
-
-        if (renderFunction) {
-            const content = await renderFunction();
-            moduleCache[moduleId] = content;  // ← cache it
-            contentArea.innerHTML = '';
-            contentArea.appendChild(content);
-        }
-    } catch (error) {
-        contentArea.innerHTML = <div class="glass-panel" style="padding: 20px; color: var(--status-danger);">Error: ${error.message}</div>;
-    }
 }
 
 // Start app
