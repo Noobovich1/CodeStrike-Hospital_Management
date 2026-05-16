@@ -91,15 +91,17 @@ async function loadMasterTreatments(container) {
         // Populate table
         tbody.innerHTML = treatments.map(t => `
             <tr style="border-bottom: 1px solid var(--border-color);">
-                <td style="padding: 12px;">${t.treatmentId}</td>
-                <td style="padding: 12px; font-weight: 500;">${t.treatmentName}</td>
-                <td style="padding: 12px;">$${t.cost}</td>
-                <td style="padding: 12px; color: var(--text-secondary);">${t.description || '-'}</td>
+            <td style="padding: 12px;">${t.treatmentId}</td>
+            <td style="padding: 12px; font-weight: 500;">${t.name}</td>
+            <td style="padding: 12px;">$${t.unitCost}</td>
+            <td style="padding: 12px; color: var(--text-secondary);">${t.description || '-'}</td>
             </tr>
         `).join('');
 
         // Populate dropdown
-        select.innerHTML = treatments.map(t => `<option value="${t.treatmentId}">${t.treatmentName} ($${t.cost})</option>`).join('');
+        select.innerHTML = treatments.map(t => 
+            <option value="${t.treatmentId}">${t.name} ($${t.unitCost})</option>  // ← same fix
+        ).join('');
 
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--status-danger);">Error loading treatments</td></tr>';

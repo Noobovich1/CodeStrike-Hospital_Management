@@ -24,4 +24,10 @@ public class PatientService {
     public List<Patient> getAllPatients() {
         return patientRepository.findAll();
     }
+
+    public Patient getPatientById(String patientId) {
+        return patientRepository.findById(patientId)
+            .orElseThrow(() -> new RuntimeException("Patient not found: " + patientId));
+    }
+
 }

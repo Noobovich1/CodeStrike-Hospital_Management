@@ -130,14 +130,32 @@ function renderCharts(container, rooms, bills) {
         }
     });
 
-    // Mock trend for revenue (In reality, group bills by date)
+    // Group bills by month and sum totalAmount
+    const monthlyRevenue = Array(6).fill(0);
+    const now = new Date();
+    bills.forEach(b => {
+        if (!b.generatedAt) return;
+        const billDate = new Date(b.generatedAt);
+        const monthDiff = (now.getFullYear() - billDate.getFullYear()) * 12 
+                    + (now.getMonth() - billDate.getMonth());
+        if (monthDiff >= 0 && monthDiff < 6) {
+            monthlyRevenue[5 - monthDiff] += b.totalAmount || 0;
+        }
+    });
+
+    const monthLabels = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        monthLabels.push(d.toLocaleString('default', { month: 'short' }));
+    }
+
     new Chart(ctxRev, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: monthLabels,
             datasets: [{
                 label: 'Revenue Trend',
-                data: [1200, 1900, 3000, 5000, 2000, 3000],
+                data: monthlyRevenue,             // ← real data now
                 borderColor: 'rgba(16, 185, 129, 1)',
                 tension: 0.1,
                 fill: false

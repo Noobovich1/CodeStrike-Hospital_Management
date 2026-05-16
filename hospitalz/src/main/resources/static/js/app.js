@@ -112,10 +112,18 @@ function renderSidebar() {
 }
 
 // --- Content Loading ---
+const moduleCache = {};
 async function loadModule(moduleId, moduleTitle) {
     pageTitle.textContent = moduleTitle;
     contentArea.innerHTML = `<div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>`;
     
+    // If already cached, reuse it — no API call
+    if (moduleCache[moduleId]) {
+        contentArea.innerHTML = '';
+        contentArea.appendChild(moduleCache[moduleId]);
+        return;
+    }
+
     try {
         let module;
         let renderFunction;
@@ -162,6 +170,7 @@ async function loadModule(moduleId, moduleTitle) {
 
         if (renderFunction) {
             const content = await renderFunction();
+            moduleCache[moduleId] = content;  // ← cache it
             contentArea.innerHTML = '';
             contentArea.appendChild(content);
         }
@@ -170,6 +179,7 @@ async function loadModule(moduleId, moduleTitle) {
         contentArea.innerHTML = `<div class="glass-panel" style="padding: 20px; color: var(--status-danger);">Error loading module: ${error.message}</div>`;
     }
 }
+
 function checkAuth() {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -236,14 +246,11 @@ function init() {
     roleSelect.value = currentRole;
     roleSelect.addEventListener('change', (e) => {
         currentRole = e.target.value;
+        Object.keys(moduleCache).forEach(k => delete moduleCache[k]); // ← clear cache on role switch
         displayRole.textContent = roleConfig[currentRole].name;
         renderSidebar();
-        
-        // Auto load first module of the new role
         const firstModule = roleConfig[currentRole].menu[0];
-        if (firstModule) {
-            loadModule(firstModule.id, firstModule.label);
-        }
+        if (firstModule) loadModule(firstModule.id, firstModule.label);
     });
 
     // Setup Logout
