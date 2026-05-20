@@ -2,6 +2,7 @@ package cswebapp.hospitalz.service;
 
 import cswebapp.hospitalz.model.Patient;
 import cswebapp.hospitalz.repository.PatientRepository;
+import cswebapp.hospitalz.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,7 @@ public class PatientService {
 
     public Patient getPatientById(String patientId) {
         return patientRepository.findById(patientId)
-            .orElseThrow(() -> new RuntimeException("Patient not found: " + patientId));
+            .orElseThrow(() -> new ResourceNotFoundException("Patient not found: " + patientId));
     }
 
 }

@@ -8,50 +8,11 @@ export async function renderRegisterForm() {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
                 <h2 style="margin: 0;">Patient Management</h2>
                 <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="patient-search" placeholder="Search name/phone/ID..." style="padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); min-width: 200px;">
+                    <input type="text" id="patient-search" placeholder="Search name/phone/ID..." style="padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); min-width: 200px;">
                     <button id="btn-register-patient" class="btn btn-primary" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">
                         <i class="fa-solid fa-plus"></i> Register
                     </button>
                 </div>
-            </div>
-            
-            <div id="patient-form-container" style="display: none; margin-bottom: 24px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.02);">
-                <form id="patient-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Full Name *</label>
-                            <input type="text" id="patient-name" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Date of Birth *</label>
-                            <input type="date" id="patient-dob" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Gender *</label>
-                            <select id="patient-gender" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                                <option value="MALE">Male</option>
-                                <option value="FEMALE">Female</option>
-                                <option value="OTHER">Other</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Phone Number *</label>
-                            <input type="text" id="patient-phone" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Blood Group</label>
-                            <input type="text" id="patient-blood" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Emergency Contact</label>
-                            <input type="text" id="patient-em-phone" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button type="button" id="btn-cancel-patient" style="padding: 8px 16px; border: 1px solid var(--border-color); background: transparent; border-radius: 6px; cursor: pointer;">Cancel</button>
-                        <button type="submit" style="padding: 8px 16px; background: var(--status-success); color: white; border: none; border-radius: 6px; cursor: pointer;">Save Patient</button>
-                    </div>
-                </form>
             </div>
 
             <div style="overflow-x: auto;">
@@ -73,12 +34,58 @@ export async function renderRegisterForm() {
             </div>
         </div>
 
+        <!-- Register Patient Pop-up Modal -->
+        <div id="patient-reg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                    <h2 style="margin: 0;">Register Patient</h2>
+                    <button id="close-patient-reg-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
+                </div>
+                <form id="patient-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 4px;">Full Name *</label>
+                            <input type="text" id="patient-name" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px;">Date of Birth *</label>
+                            <input type="date" id="patient-dob" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px;">Gender *</label>
+                            <select id="patient-gender" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px;">Phone Number *</label>
+                            <input type="text" id="patient-phone" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px;">Blood Group</label>
+                            <input type="text" id="patient-blood" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px;">Emergency Contact</label>
+                            <input type="text" id="patient-em-phone" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button type="button" id="btn-cancel-patient" style="padding: 8px 16px; border: 1px solid var(--border-color); background: transparent; border-radius: 6px; cursor: pointer; color: var(--text-primary);">Cancel</button>
+                        <button type="submit" style="padding: 8px 16px; background: var(--status-success); color: white; border: none; border-radius: 6px; cursor: pointer;">Save Patient</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Patient Detail Modal -->
         <div id="patient-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
             <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 700px; padding: 24px; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
                     <h2 style="margin: 0;">Patient Details</h2>
-                    <button id="close-patient-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    <button id="close-patient-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                 </div>
                 <div id="patient-modal-content"></div>
             </div>
@@ -138,14 +145,15 @@ function renderPatientTable(patientList, container) {
     `).join('');
 
     container.querySelectorAll('.btn-view-patient').forEach(btn => {
-        btn.onclick = (e) => showPatientDetails(e.target.dataset.id, container);
+        btn.onclick = () => showPatientDetails(btn.dataset.id, container);
     });
 }
 
 function setupPatientEvents(container, getAllPatientsFn) {
     const btnRegister = container.querySelector('#btn-register-patient');
-    const formContainer = container.querySelector('#patient-form-container');
+    const regModal = container.querySelector('#patient-reg-modal');
     const btnCancel = container.querySelector('#btn-cancel-patient');
+    const btnCloseReg = container.querySelector('#close-patient-reg-modal');
     const form = container.querySelector('#patient-form');
     const searchInput = container.querySelector('#patient-search');
 
@@ -161,13 +169,16 @@ function setupPatientEvents(container, getAllPatientsFn) {
     });
 
     btnRegister.addEventListener('click', () => {
-        formContainer.style.display = 'block';
+        regModal.style.display = 'flex';
     });
 
-    btnCancel.addEventListener('click', () => {
-        formContainer.style.display = 'none';
+    const closeRegModal = () => {
+        regModal.style.display = 'none';
         form.reset();
-    });
+    };
+
+    btnCancel.addEventListener('click', closeRegModal);
+    btnCloseReg.addEventListener('click', closeRegModal);
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -185,11 +196,8 @@ function setupPatientEvents(container, getAllPatientsFn) {
         try {
             await api.post('/patients', payload);
             alert('Patient registered successfully!');
-            form.reset();
-            formContainer.style.display = 'none';
-            // Reload
+            closeRegModal();
             const updated = await loadPatientData();
-            // Need a way to update the allPatients ref, but simple re-render works if we don't have search text.
             renderPatientTable(updated, container);
             searchInput.value = '';
         } catch (error) {
@@ -211,7 +219,7 @@ async function showPatientDetails(patientId, container) {
 
     try {
         const patient = await api.get(`/patients/${patientId}`);
-        const doctors = await api.get(`/doctor-patient/patient/${patientId}`).catch(()=>[]);
+        const doctors = await api.get(`/doctor-patient/patient/${patientId}/doctors`).catch(()=>[]);
         const treatments = await api.get(`/treatment-records/patient/${patientId}`).catch(()=>[]);
 
         content.innerHTML = `
@@ -283,7 +291,7 @@ export async function renderDoctorPatientList() {
 
     setTimeout(async () => {
         const tbody = container.querySelector('#doc-patient-list');
-        const doctorId = localStorage.getItem('username'); // Assuming username = doctorId
+        const doctorId = localStorage.getItem('username');
 
         try {
             const list = await api.get(`/doctor-patient/doctor/${doctorId}/patients`);
