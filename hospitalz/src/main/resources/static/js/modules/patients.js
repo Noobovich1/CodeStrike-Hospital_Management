@@ -1,9 +1,9 @@
-import { api } from '../api.js';
+import { api } from "../api.js";
 
 export async function renderRegisterForm() {
-    const container = document.createElement('div');
-    
-    container.innerHTML = `
+  const container = document.createElement("div");
+
+  container.innerHTML = `
         <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
                 <h2 style="margin: 0;">Patient Management</h2>
@@ -92,46 +92,48 @@ export async function renderRegisterForm() {
         </div>
     `;
 
-    setTimeout(() => {
-        let allPatients = [];
-        loadPatientData().then(data => {
-            allPatients = data || [];
-            renderPatientTable(allPatients, container);
-        });
-        
-        setupPatientEvents(container, () => allPatients);
-    }, 0);
+  setTimeout(() => {
+    let allPatients = [];
+    loadPatientData().then((data) => {
+      allPatients = data || [];
+      renderPatientTable(allPatients, container);
+    });
 
-    return container;
+    setupPatientEvents(container, () => allPatients);
+  }, 0);
+
+  return container;
 }
 
 async function loadPatientData() {
-    try {
-        return await api.get('/patients');
-    } catch (error) {
-        console.error(error);
-        return [];
-    }
+  try {
+    return await api.get("/patients");
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
 }
 
 function renderPatientTable(patientList, container) {
-    const tbody = container.querySelector('#patient-table-body');
-    if (!tbody) return;
+  const tbody = container.querySelector("#patient-table-body");
+  if (!tbody) return;
 
-    if (!patientList || patientList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">No patients found.</td></tr>`;
-        return;
-    }
+  if (!patientList || patientList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">No patients found.</td></tr>`;
+    return;
+  }
 
-    tbody.innerHTML = patientList.map(p => `
+  tbody.innerHTML = patientList
+    .map(
+      (p) => `
         <tr style="border-bottom: 1px solid var(--border-color);">
-            <td style="padding: 12px;">${p.patientId || '-'}</td>
+            <td style="padding: 12px;">${p.patientId || "-"}</td>
             <td style="padding: 12px; font-weight: 500;">${p.fullName}</td>
             <td style="padding: 12px;">${p.gender}</td>
             <td style="padding: 12px;">${p.phoneNumber}</td>
             <td style="padding: 12px;">
                 <span style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 0.85em;">
-                    ${p.status || 'OUTPATIENT'}
+                    ${p.status || "OUTPATIENT"}
                 </span>
             </td>
             <td style="padding: 12px;">
@@ -142,87 +144,95 @@ function renderPatientTable(patientList, container) {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `,
+    )
+    .join("");
 
-    container.querySelectorAll('.btn-view-patient').forEach(btn => {
-        btn.onclick = () => showPatientDetails(btn.dataset.id, container);
-    });
+  container.querySelectorAll(".btn-view-patient").forEach((btn) => {
+    btn.onclick = () => showPatientDetails(btn.dataset.id, container);
+  });
 }
 
 function setupPatientEvents(container, getAllPatientsFn) {
-    const btnRegister = container.querySelector('#btn-register-patient');
-    const regModal = container.querySelector('#patient-reg-modal');
-    const btnCancel = container.querySelector('#btn-cancel-patient');
-    const btnCloseReg = container.querySelector('#close-patient-reg-modal');
-    const form = container.querySelector('#patient-form');
-    const searchInput = container.querySelector('#patient-search');
+  const btnRegister = container.querySelector("#btn-register-patient");
+  const regModal = container.querySelector("#patient-reg-modal");
+  const btnCancel = container.querySelector("#btn-cancel-patient");
+  const btnCloseReg = container.querySelector("#close-patient-reg-modal");
+  const form = container.querySelector("#patient-form");
+  const searchInput = container.querySelector("#patient-search");
 
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const allPatients = getAllPatientsFn();
-        const filtered = allPatients.filter(p => 
-            (p.fullName && p.fullName.toLowerCase().includes(query)) ||
-            (p.phoneNumber && p.phoneNumber.includes(query)) ||
-            (p.patientId && p.patientId.toLowerCase().includes(query))
-        );
-        renderPatientTable(filtered, container);
-    });
+  searchInput.addEventListener("input", (e) => {
+    const query = e.target.value.toLowerCase();
+    const allPatients = getAllPatientsFn();
+    const filtered = allPatients.filter(
+      (p) =>
+        (p.fullName && p.fullName.toLowerCase().includes(query)) ||
+        (p.phoneNumber && p.phoneNumber.includes(query)) ||
+        (p.patientId && p.patientId.toLowerCase().includes(query)),
+    );
+    renderPatientTable(filtered, container);
+  });
 
-    btnRegister.addEventListener('click', () => {
-        regModal.style.display = 'flex';
-    });
+  btnRegister.addEventListener("click", () => {
+    regModal.style.display = "flex";
+  });
 
-    const closeRegModal = () => {
-        regModal.style.display = 'none';
-        form.reset();
+  const closeRegModal = () => {
+    regModal.style.display = "none";
+    form.reset();
+  };
+
+  btnCancel.addEventListener("click", closeRegModal);
+  btnCloseReg.addEventListener("click", closeRegModal);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      fullName: document.getElementById("patient-name").value,
+      dateOfBirth: document.getElementById("patient-dob").value,
+      gender: document.getElementById("patient-gender").value,
+      phoneNumber: document.getElementById("patient-phone").value,
+      bloodGroup: document.getElementById("patient-blood").value,
+      emergencyContactPhone: document.getElementById("patient-em-phone").value,
+      status: "OUTPATIENT",
     };
 
-    btnCancel.addEventListener('click', closeRegModal);
-    btnCloseReg.addEventListener('click', closeRegModal);
+    try {
+      await api.post("/patients", payload);
+      alert("Patient registered successfully!");
+      closeRegModal();
+      const updated = await loadPatientData();
+      renderPatientTable(updated, container);
+      searchInput.value = "";
+    } catch (error) {
+      alert("Error: " + error.message);
+    }
+  });
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const payload = {
-            fullName: document.getElementById('patient-name').value,
-            dateOfBirth: document.getElementById('patient-dob').value,
-            gender: document.getElementById('patient-gender').value,
-            phoneNumber: document.getElementById('patient-phone').value,
-            bloodGroup: document.getElementById('patient-blood').value,
-            emergencyContactPhone: document.getElementById('patient-em-phone').value,
-            status: 'OUTPATIENT'
-        };
-
-        try {
-            await api.post('/patients', payload);
-            alert('Patient registered successfully!');
-            closeRegModal();
-            const updated = await loadPatientData();
-            renderPatientTable(updated, container);
-            searchInput.value = '';
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
-    });
-
-    container.querySelector('#close-patient-modal').onclick = () => {
-        container.querySelector('#patient-modal').style.display = 'none';
-    };
+  container.querySelector("#close-patient-modal").onclick = () => {
+    container.querySelector("#patient-modal").style.display = "none";
+  };
 }
 
 async function showPatientDetails(patientId, container) {
-    const modal = container.querySelector('#patient-modal');
-    const content = container.querySelector('#patient-modal-content');
-    
-    content.innerHTML = '<div style="text-align:center; padding: 20px;">Loading details...</div>';
-    modal.style.display = 'flex';
+  const modal = container.querySelector("#patient-modal");
+  const content = container.querySelector("#patient-modal-content");
 
-    try {
-        const patient = await api.get(`/patients/${patientId}`);
-        const doctors = await api.get(`/doctor-patient/patient/${patientId}/doctors`).catch(()=>[]);
-        const treatments = await api.get(`/treatment-records/patient/${patientId}`).catch(()=>[]);
+  content.innerHTML =
+    '<div style="text-align:center; padding: 20px;">Loading details...</div>';
+  modal.style.display = "flex";
 
-        content.innerHTML = `
+  try {
+    const patient = await api.get(`/patients/${patientId}`);
+    const doctors = await api
+      .get(`/doctor-patient/patient/${patientId}/doctors`)
+      .catch(() => []);
+    const treatments = await api
+      .get(`/treatment-records/patient/${patientId}`)
+      .catch(() => []);
+
+    content.innerHTML = `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                 <div>
                     <p><strong>Name:</strong> ${patient.fullName}</p>
@@ -231,14 +241,14 @@ async function showPatientDetails(patientId, container) {
                 </div>
                 <div>
                     <p><strong>Phone:</strong> ${patient.phoneNumber}</p>
-                    <p><strong>Blood:</strong> ${patient.bloodGroup || '-'}</p>
+                    <p><strong>Blood:</strong> ${patient.bloodGroup || "-"}</p>
                     <p><strong>Status:</strong> <span style="color: var(--accent-primary); font-weight: bold;">${patient.status}</span></p>
                 </div>
             </div>
             
             <h3 style="margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Assigned Doctors</h3>
             <ul style="margin-bottom: 24px; padding-left: 20px;">
-                ${doctors.length > 0 ? doctors.map(dp => `<li>${dp.doctor?.fullName} (${dp.isPrimary ? 'Primary' : 'Secondary'})</li>`).join('') : '<li>No doctors assigned</li>'}
+                ${doctors.length > 0 ? doctors.map((dp) => `<li>${dp.doctor?.fullName} (${dp.isPrimary ? "Primary" : "Secondary"})</li>`).join("") : "<li>No doctors assigned</li>"}
             </ul>
 
             <h3 style="margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Treatment History</h3>
@@ -251,24 +261,33 @@ async function showPatientDetails(patientId, container) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${treatments.length > 0 ? treatments.map(tr => `
+                    ${
+                      treatments.length > 0
+                        ? treatments
+                            .map(
+                              (tr) => `
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 8px;">${new Date(tr.sessionDate).toLocaleDateString()}</td>
                             <td style="padding: 8px;">${tr.treatment?.name} (Qty: ${tr.quantity})</td>
-                            <td style="padding: 8px;">${tr.doctor?.fullName || '-'}</td>
+                            <td style="padding: 8px;">${tr.doctor?.fullName || "-"}</td>
                         </tr>
-                    `).join('') : '<tr><td colspan="3" style="padding: 8px; text-align: center;">No treatments recorded</td></tr>'}
+                    `,
+                            )
+                            .join("")
+                        : '<tr><td colspan="3" style="padding: 8px; text-align: center;">No treatments recorded</td></tr>'
+                    }
                 </tbody>
             </table>
         `;
-    } catch (err) {
-        content.innerHTML = '<div style="color: red;">Failed to load patient details.</div>';
-    }
+  } catch (err) {
+    content.innerHTML =
+      '<div style="color: red;">Failed to load patient details.</div>';
+  }
 }
 
 export async function renderDoctorPatientList() {
-    const container = document.createElement('div');
-    container.innerHTML = `
+  const container = document.createElement("div");
+  container.innerHTML = `
         <div class="glass-panel" style="padding: 24px;">
             <h3>My Patients</h3>
             <div style="overflow-x: auto; margin-top: 20px;">
@@ -289,28 +308,40 @@ export async function renderDoctorPatientList() {
         </div>
     `;
 
-    setTimeout(async () => {
-        const tbody = container.querySelector('#doc-patient-list');
-        const doctorId = localStorage.getItem('username');
+  setTimeout(async () => {
+    const tbody = container.querySelector("#doc-patient-list");
+    const doctorId = localStorage.getItem("doctorId");
 
-        try {
-            const list = await api.get(`/doctor-patient/doctor/${doctorId}/patients`);
-            if (!list || list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No patients assigned.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = list.map(dp => `
+    if (!doctorId) {
+      tbody.innerHTML =
+        '<tr><td colspan="4" style="text-align:center; color: var(--status-danger);">No doctor profile is linked to this account.</td></tr>';
+      return;
+    }
+
+    try {
+      const list = await api.get(`/doctor-patient/doctor/${doctorId}/patients`);
+      if (!list || list.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="4" style="text-align:center;">No patients assigned.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list
+        .map(
+          (dp) => `
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px;">${dp.patient?.patientId}</td>
                     <td style="padding: 12px; font-weight: 500;">${dp.patient?.fullName}</td>
-                    <td style="padding: 12px;">${dp.isPrimary ? '<span style="color:var(--status-success)">Yes</span>' : 'No'}</td>
-                    <td style="padding: 12px; color: var(--text-secondary);">${dp.notes || '-'}</td>
+                    <td style="padding: 12px;">${dp.isPrimary ? '<span style="color:var(--status-success)">Yes</span>' : "No"}</td>
+                    <td style="padding: 12px; color: var(--text-secondary);">${dp.notes || "-"}</td>
                 </tr>
-            `).join('');
-        } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--status-danger);">Error loading your patients</td></tr>';
-        }
-    }, 0);
+            `,
+        )
+        .join("");
+    } catch (e) {
+      tbody.innerHTML =
+        '<tr><td colspan="4" style="text-align:center; color: var(--status-danger);">Error loading your patients</td></tr>';
+    }
+  }, 0);
 
-    return container;
+  return container;
 }

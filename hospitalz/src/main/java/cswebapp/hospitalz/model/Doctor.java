@@ -16,6 +16,10 @@ public class Doctor {
     @Column(name = "doctor_id", length = 20, updatable = false)
     private String doctorId;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
+
     @Column(name = "full_name", nullable = false, length = 255)
     private String fullName;
 

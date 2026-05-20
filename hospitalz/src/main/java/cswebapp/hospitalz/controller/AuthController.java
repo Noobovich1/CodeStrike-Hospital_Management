@@ -1,7 +1,9 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
+import cswebapp.hospitalz.model.Doctor;
 import cswebapp.hospitalz.model.User;
+import cswebapp.hospitalz.repository.DoctorRepository;
 import cswebapp.hospitalz.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,9 @@ public class AuthController {
     private UserRepository userRepository;
 
     @Autowired
+    private DoctorRepository doctorRepository;
+
+    @Autowired
     private JwtService jwtService;
 
     @Autowired
@@ -31,11 +36,19 @@ public class AuthController {
         // passwordEncoder.matches(mật_khẩu_nhập_vào, mật_khẩu_đã_mã_hóa_trong_db)
         if (user != null && passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
-            return ResponseEntity.ok(Map.of(
-                "token", token,
-                "role", user.getRole().name(),
-                "username", user.getUsername()
-            ));
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("token", token);
+            response.put("role", user.getRole().name());
+            response.put("username", user.getUsername());
+
+            if ("DOCTOR".equals(user.getRole().name())) {
+                Doctor doctor = doctorRepository.findByUser_Id(user.getId()).orElse(null);
+                if (doctor != null) {
+                    response.put("doctorId", doctor.getDoctorId());
+                }
+            }
+
+            return ResponseEntity.ok(response);
         }
         return ResponseEntity.status(401).body("Invalid username or password");
     }
