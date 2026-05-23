@@ -35,6 +35,17 @@ public class DoctorPatientService {
         Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found: " + request.getPatientId()));
 
+        //prevent duplicate assignment error
+        boolean alreadyAssigned = doctorPatientRepository
+                .findByPatient_PatientId(request.getPatientId())
+                .stream()
+                .anyMatch(dp -> dp.getDoctor().getDoctorId().equals(request.getDoctorId()));
+
+        if (alreadyAssigned) {
+            throw new RuntimeException("Doctor " + request.getDoctorId() 
+                + " is already assigned to patient " + request.getPatientId());
+        }
+        
         // 3. Build the junction record
         DoctorPatient assignment = new DoctorPatient();
         assignment.setDoctor(doctor);

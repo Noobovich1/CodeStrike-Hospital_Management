@@ -25,9 +25,9 @@ public class PatientController {
         return patientService.getAllPatients();
     }
 
-    @GetMapping("/{patientId}")
-    public ResponseEntity<Patient> getPatientById(@PathVariable String patientId) {
-        return ResponseEntity.ok(patientService.getPatientById(patientId));
+    @GetMapping("/{id}")
+    public ResponseEntity<Patient> getPatientById(@PathVariable String id) {
+        return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
 }

@@ -34,10 +34,14 @@ public class TreatmentService {
     public Treatment updateTreatment(Long treatmentId, Treatment updatedData) {
         Treatment existing = getTreatmentById(treatmentId);
 
-        if (updatedData.getName() != null) existing.setName(updatedData.getName());
-        if (updatedData.getCategory() != null) existing.setCategory(updatedData.getCategory());
-        if (updatedData.getUnitCost() != null) existing.setUnitCost(updatedData.getUnitCost());
-        if (updatedData.getDescription() != null) existing.setDescription(updatedData.getDescription());
+        if (updatedData.getName() != null)
+            existing.setName(updatedData.getName());
+        if (updatedData.getCategory() != null)
+            existing.setCategory(updatedData.getCategory());
+        if (updatedData.getUnitCost() != null)
+            existing.setUnitCost(updatedData.getUnitCost());
+        if (updatedData.getDescription() != null)
+            existing.setDescription(updatedData.getDescription());
 
         return treatmentRepository.save(existing);
     }
@@ -46,6 +50,12 @@ public class TreatmentService {
     public void deactivateTreatment(Long treatmentId) {
         Treatment existing = getTreatmentById(treatmentId);
         existing.setIsActive(false);
+        treatmentRepository.save(existing);
+    }
+
+    public void activateTreatment(Long treatmentId) {
+        Treatment existing = getTreatmentById(treatmentId);
+        existing.setIsActive(true);
         treatmentRepository.save(existing);
     }
 }

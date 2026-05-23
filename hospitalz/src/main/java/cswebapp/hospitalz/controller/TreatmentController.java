@@ -47,4 +47,10 @@ public class TreatmentController {
         treatmentService.deactivateTreatment(treatmentId);
         return ResponseEntity.ok("Treatment " + treatmentId + " deactivated.");
     }
+
+    @PostMapping("/{treatmentId}/activate")
+    public ResponseEntity<String> activateTreatment(@PathVariable Long treatmentId) {
+        treatmentService.activateTreatment(treatmentId);
+        return ResponseEntity.ok("Treatment " + treatmentId + " activated.");
+    }
 }

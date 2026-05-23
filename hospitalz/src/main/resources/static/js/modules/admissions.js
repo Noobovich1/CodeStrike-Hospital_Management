@@ -5,101 +5,161 @@ export async function renderActiveAdmissions() {
     
     container.innerHTML = `
         <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">Active Admissions & Assignments</h2>
-                <div style="display: flex; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
+                <h2 style="margin: 0;">Admissions & Assignments</h2>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <button id="btn-tab-active" class="btn active-tab" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary);">Active Admissions</button>
+                    <button id="btn-tab-history" class="btn" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; background: transparent; color: var(--text-primary);">Admission History</button>
                     <button id="btn-admit-patient" class="btn btn-primary" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">
                         <i class="fa-solid fa-bed-pulse"></i> Admit Patient
                     </button>
-                    <button id="btn-assign-doctor" class="btn" style="padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer;">
+                    <button id="btn-assign-doctor" class="btn" style="padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; color: var(--text-primary);">
                         <i class="fa-solid fa-user-doctor"></i> Assign Doctor
                     </button>
                 </div>
             </div>
 
-            <!-- Admit Form -->
-            <div id="admit-form-container" style="display: none; margin-bottom: 24px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.02);">
-                <h3 style="margin-bottom: 12px;">Admit Patient</h3>
+            <!-- Active Admissions Section -->
+            <div id="section-active-admissions">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="padding: 12px;">Admiss. ID</th>
+                                <th style="padding: 12px;">Patient</th>
+                                <th style="padding: 12px;">Room</th>
+                                <th style="padding: 12px;">Admission Date</th>
+                                <th style="padding: 12px;">Status</th>
+                                <th style="padding: 12px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admissions-table-body">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading active admissions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admissions History Section -->
+            <div id="section-history-admissions" style="display: none;">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="padding: 12px;">Admiss. ID</th>
+                                <th style="padding: 12px;">Patient</th>
+                                <th style="padding: 12px;">Room</th>
+                                <th style="padding: 12px;">Admission Date</th>
+                                <th style="padding: 12px;">Discharge Date</th>
+                                <th style="padding: 12px;">Status</th>
+                                <th style="padding: 12px;">Total Days</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <tr><td colspan="7" style="text-align: center; padding: 20px;">Loading history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admit Pop-up Modal -->
+        <div id="admit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                    <h3 style="margin: 0;">Admit Patient</h3>
+                    <button id="close-admit-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
+                </div>
                 <form id="admit-form">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                         <div>
-                            <label>Patient ID *</label>
-                            <input type="text" id="admit-patient-id" required style="width: 100%; padding: 8px; border-radius: 4px;">
+                            <label style="display: block; margin-bottom: 4px;">Patient ID *</label>
+                            <input type="text" id="admit-patient-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                         </div>
                         <div>
-                            <label>Room ID *</label>
-                            <input type="number" id="admit-room-id" required style="width: 100%; padding: 8px; border-radius: 4px;">
+                            <label style="display: block; margin-bottom: 4px;">Room *</label>
+                            <select id="admit-room-select" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="">Loading available rooms...</option>
+                            </select>
                         </div>
                         <div style="grid-column: span 2;">
-                            <label>Notes</label>
-                            <input type="text" id="admit-notes" style="width: 100%; padding: 8px; border-radius: 4px;">
+                            <label style="display: block; margin-bottom: 4px;">Notes</label>
+                            <input type="text" id="admit-notes" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                         </div>
                     </div>
                     <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button type="button" id="btn-cancel-admit" class="btn" style="padding: 8px 16px;">Cancel</button>
-                        <button type="submit" class="btn" style="padding: 8px 16px; background: var(--status-success); color: white;">Admit</button>
+                        <button type="button" id="btn-cancel-admit" style="padding: 8px 16px; border: 1px solid var(--border-color); background: transparent; border-radius: 6px; cursor: pointer; color: var(--text-primary);">Cancel</button>
+                        <button type="submit" style="padding: 8px 16px; background: var(--status-success); color: white; border: none; border-radius: 6px; cursor: pointer;">Admit</button>
                     </div>
                 </form>
             </div>
+        </div>
 
-            <!-- Assign Doctor Form -->
-            <div id="assign-doc-form-container" style="display: none; margin-bottom: 24px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.02);">
-                <h3 style="margin-bottom: 12px;">Assign Doctor to Patient</h3>
+        <!-- Assign Doctor Pop-up Modal -->
+        <div id="assign-doc-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                    <h3 style="margin: 0;">Assign Doctor to Patient</h3>
+                    <button id="close-assign-doc-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
+                </div>
                 <form id="assign-doc-form">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                         <div>
-                            <label>Patient ID *</label>
-                            <input type="text" id="assign-patient-id" required style="width: 100%; padding: 8px; border-radius: 4px;">
+                            <label style="display: block; margin-bottom: 4px;">Patient ID *</label>
+                            <input type="text" id="assign-patient-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                         </div>
                         <div>
-                            <label>Doctor ID *</label>
-                            <input type="text" id="assign-doc-id" required style="width: 100%; padding: 8px; border-radius: 4px;">
+                            <label style="display: block; margin-bottom: 4px;">Doctor ID *</label>
+                            <input type="text" id="assign-doc-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                         </div>
                         <div>
-                            <label>Primary Doctor?</label>
-                            <select id="assign-primary" style="width: 100%; padding: 8px; border-radius: 4px;">
+                            <label style="display: block; margin-bottom: 4px;">Primary Doctor?</label>
+                            <select id="assign-primary" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                                 <option value="true">Yes</option>
                                 <option value="false">No</option>
                             </select>
                         </div>
                         <div>
-                            <label>Notes</label>
-                            <input type="text" id="assign-notes" style="width: 100%; padding: 8px; border-radius: 4px;">
+                            <label style="display: block; margin-bottom: 4px;">Notes</label>
+                            <input type="text" id="assign-notes" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                         </div>
                     </div>
                     <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button type="button" id="btn-cancel-assign" class="btn" style="padding: 8px 16px;">Cancel</button>
-                        <button type="submit" class="btn" style="padding: 8px 16px; background: var(--accent-primary); color: white;">Assign</button>
+                        <button type="button" id="btn-cancel-assign" style="padding: 8px 16px; border: 1px solid var(--border-color); background: transparent; border-radius: 6px; cursor: pointer; color: var(--text-primary);">Cancel</button>
+                        <button type="submit" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">Assign</button>
                     </div>
                 </form>
-            </div>
-
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid var(--border-color);">
-                            <th style="padding: 12px;">Admiss. ID</th>
-                            <th style="padding: 12px;">Patient</th>
-                            <th style="padding: 12px;">Room</th>
-                            <th style="padding: 12px;">Admission Date</th>
-                            <th style="padding: 12px;">Status</th>
-                            <th style="padding: 12px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admissions-table-body">
-                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading active admissions...</td></tr>
-                    </tbody>
-                </table>
             </div>
         </div>
     `;
 
     setTimeout(() => {
         loadActiveAdmissions();
+        loadHistoryAdmissions();
         setupAdmissionsEvents(container);
+        loadAvailableRooms();
     }, 0);
 
     return container;
+}
+
+async function loadAvailableRooms() {
+    const select = document.getElementById('admit-room-select');
+    if (!select) return;
+
+    try {
+        const availableRooms = await api.get('/rooms/available');
+        if (availableRooms.length === 0) {
+            select.innerHTML = '<option value="">No available rooms found</option>';
+            return;
+        }
+
+        select.innerHTML = `<option value="">Select an available room</option>` + availableRooms.map(r => `
+            <option value="${r.roomId}">Room ${r.roomNumber} - ${r.roomType} (Capacity: ${r.currentOccupancy}/${r.capacity}, $${r.dailyRate}/day)</option>
+        `).join('');
+    } catch (error) {
+        select.innerHTML = '<option value="">Error loading available rooms</option>';
+    }
 }
 
 async function loadActiveAdmissions() {
@@ -117,25 +177,27 @@ async function loadActiveAdmissions() {
         tbody.innerHTML = admissions.map(a => `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px;">${a.admissionId}</td>
-                <td style="padding: 12px; font-weight: 500;">${a.patient?.fullName || a.patient?.patientId || '-'}</td>
-                <td style="padding: 12px;">${a.room?.roomNumber || a.room?.roomId || '-'}</td>
+                <td style="padding: 12px; font-weight: 500;">${a.patient?.fullName || a.patient?.patientId || '-'} <span style="font-size:0.85em; color:var(--text-secondary);">(${a.patient?.patientId})</span></td>
+                <td style="padding: 12px;">Room ${a.room?.roomNumber || a.room?.roomId || '-'}</td>
                 <td style="padding: 12px;">${new Date(a.admissionDate).toLocaleString()}</td>
-                <td style="padding: 12px;"><span style="color: var(--status-success);"><i class="fa-solid fa-bed"></i> ${a.status}</span></td>
+                <td style="padding: 12px;"><span style="color: var(--status-success); font-weight: 600;"><i class="fa-solid fa-bed"></i> ${a.status}</span></td>
                 <td style="padding: 12px;">
-                    <button class="btn btn-discharge" data-id="${a.admissionId}" style="padding: 4px 8px; background: var(--status-danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">Discharge</button>
+                    <button class="btn btn-discharge" data-id="${a.admissionId}" style="padding: 6px 12px; background: var(--status-danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">Discharge</button>
                 </td>
             </tr>
         `).join('');
 
-        // Attach discharge event listeners
+        // Attach discharge event listeners safely
         document.querySelectorAll('.btn-discharge').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const id = e.target.getAttribute('data-id');
+            btn.addEventListener('click', async () => {
+                const id = btn.dataset.id;
                 if (confirm('Are you sure you want to discharge admission ID ' + id + '?')) {
                     try {
                         await api.put(`/admissions/${id}/discharge`);
                         alert('Patient discharged successfully!');
                         loadActiveAdmissions();
+                        loadHistoryAdmissions();
+                        loadAvailableRooms();
                     } catch (error) {
                         alert('Error discharging: ' + error.message);
                     }
@@ -148,32 +210,112 @@ async function loadActiveAdmissions() {
     }
 }
 
+async function loadHistoryAdmissions() {
+    const tbody = document.getElementById('history-table-body');
+    if (!tbody) return;
+
+    try {
+        const admissions = await api.get('/admissions');
+        
+        if (admissions.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">No admissions history.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = admissions.map(a => {
+            const dischargeText = a.dischargeDate ? new Date(a.dischargeDate).toLocaleString() : '-';
+            const statusColor = a.status === 'ACTIVE' ? 'var(--status-success)' : 'var(--text-secondary)';
+            return `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px;">${a.admissionId}</td>
+                    <td style="padding: 12px; font-weight: 500;">${a.patient?.fullName || a.patient?.patientId || '-'} <span style="font-size:0.85em; color:var(--text-secondary);">(${a.patient?.patientId})</span></td>
+                    <td style="padding: 12px;">Room ${a.room?.roomNumber || a.room?.roomId || '-'}</td>
+                    <td style="padding: 12px;">${new Date(a.admissionDate).toLocaleString()}</td>
+                    <td style="padding: 12px;">${dischargeText}</td>
+                    <td style="padding: 12px;"><span style="color: ${statusColor}; font-weight: 600;">${a.status}</span></td>
+                    <td style="padding: 12px;">${a.totalDays !== null && a.totalDays !== undefined ? a.totalDays : '-'}</td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--status-danger);">Error loading history data.</td></tr>`;
+    }
+}
+
 function setupAdmissionsEvents(container) {
+    const btnActiveTab = container.querySelector('#btn-tab-active');
+    const btnHistoryTab = container.querySelector('#btn-tab-history');
+    const sectionActive = container.querySelector('#section-active-admissions');
+    const sectionHistory = container.querySelector('#section-history-admissions');
+
     const btnAdmit = container.querySelector('#btn-admit-patient');
-    const formAdmit = container.querySelector('#admit-form-container');
+    const modalAdmit = container.querySelector('#admit-modal');
+    const btnCloseAdmit = container.querySelector('#close-admit-modal');
+    const btnCancelAdmit = container.querySelector('#btn-cancel-admit');
+
     const btnAssign = container.querySelector('#btn-assign-doctor');
-    const formAssign = container.querySelector('#assign-doc-form-container');
+    const modalAssign = container.querySelector('#assign-doc-modal');
+    const btnCloseAssign = container.querySelector('#close-assign-doc-modal');
+    const btnCancelAssign = container.querySelector('#btn-cancel-assign');
 
-    btnAdmit.onclick = () => { formAdmit.style.display = 'block'; formAssign.style.display = 'none'; };
-    container.querySelector('#btn-cancel-admit').onclick = () => { formAdmit.style.display = 'none'; container.querySelector('#admit-form').reset(); };
+    // Tab Switching
+    btnActiveTab.addEventListener('click', () => {
+        sectionActive.style.display = 'block';
+        sectionHistory.style.display = 'none';
+        btnActiveTab.style.background = 'var(--bg-secondary)';
+        btnHistoryTab.style.background = 'transparent';
+    });
 
-    btnAssign.onclick = () => { formAssign.style.display = 'block'; formAdmit.style.display = 'none'; };
-    container.querySelector('#btn-cancel-assign').onclick = () => { formAssign.style.display = 'none'; container.querySelector('#assign-doc-form').reset(); };
+    btnHistoryTab.addEventListener('click', () => {
+        sectionActive.style.display = 'none';
+        sectionHistory.style.display = 'block';
+        btnHistoryTab.style.background = 'var(--bg-secondary)';
+        btnActiveTab.style.background = 'transparent';
+        loadHistoryAdmissions();
+    });
+
+    // Modals
+    btnAdmit.onclick = () => { 
+        modalAdmit.style.display = 'flex'; 
+        loadAvailableRooms();
+    };
+    
+    const closeAdmit = () => { 
+        modalAdmit.style.display = 'none'; 
+        container.querySelector('#admit-form').reset(); 
+    };
+    btnCancelAdmit.onclick = closeAdmit;
+    btnCloseAdmit.onclick = closeAdmit;
+
+    btnAssign.onclick = () => { 
+        modalAssign.style.display = 'flex'; 
+    };
+    
+    const closeAssign = () => { 
+        modalAssign.style.display = 'none'; 
+        container.querySelector('#assign-doc-form').reset(); 
+    };
+    btnCancelAssign.onclick = closeAssign;
+    btnCloseAssign.onclick = closeAssign;
 
     container.querySelector('#admit-form').onsubmit = async (e) => {
         e.preventDefault();
         const payload = {
             patientId: document.getElementById('admit-patient-id').value,
-            roomId: parseInt(document.getElementById('admit-room-id').value, 10),
+            roomId: parseInt(document.getElementById('admit-room-select').value, 10),
             notes: document.getElementById('admit-notes').value
         };
         try {
             await api.post('/admissions', payload);
             alert('Patient admitted!');
-            container.querySelector('#admit-form').reset();
-            formAdmit.style.display = 'none';
+            closeAdmit();
             loadActiveAdmissions();
-        } catch (err) { alert('Error: ' + err.message); }
+            loadHistoryAdmissions();
+            loadAvailableRooms();
+        } catch (err) { 
+            alert('Error: ' + err.message); 
+        }
     };
 
     container.querySelector('#assign-doc-form').onsubmit = async (e) => {
@@ -187,8 +329,9 @@ function setupAdmissionsEvents(container) {
         try {
             await api.post('/doctor-patient', payload);
             alert('Doctor assigned to patient!');
-            container.querySelector('#assign-doc-form').reset();
-            formAssign.style.display = 'none';
-        } catch (err) { alert('Error: ' + err.message); }
+            closeAssign();
+        } catch (err) { 
+            alert('Error: ' + err.message); 
+        }
     };
 }

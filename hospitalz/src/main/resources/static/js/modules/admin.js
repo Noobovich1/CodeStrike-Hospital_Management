@@ -52,7 +52,7 @@ export async function renderAdminDashboard() {
                 <canvas id="occupancyChart"></canvas>
             </div>
             <div class="glass-panel" style="padding: 24px;">
-                <h3 style="margin-bottom: 20px; font-weight: 600;">Revenue (Làm ccj để tính revenue đi nha)</h3>
+                <h3 style="margin-bottom: 20px; font-weight: 600;">Revenue</h3>
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>

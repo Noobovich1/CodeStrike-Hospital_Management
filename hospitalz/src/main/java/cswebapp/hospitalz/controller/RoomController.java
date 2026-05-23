@@ -2,7 +2,6 @@ package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.Room;
 import cswebapp.hospitalz.model.RoomStatus;
-import cswebapp.hospitalz.model.RoomType;
 import cswebapp.hospitalz.service.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
