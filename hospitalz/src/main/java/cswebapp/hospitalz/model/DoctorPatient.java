@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(
@@ -21,14 +22,15 @@ public class DoctorPatient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Many assignments can reference one doctor
+    // Many assignments can reference one doctor and opposite
     @ManyToOne
     @JoinColumn(name = "doctor_id", nullable = false)
+    @JsonIgnoreProperties({"doctorPatients", "hibernateLazyInitializer"})
     private Doctor doctor;
 
-    // Many assignments can reference one patient
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
+    @JsonIgnoreProperties({"doctorPatients", "treatmentRecords", "hibernateLazyInitializer"})
     private Patient patient;
 
     @Column(name = "assigned_date", nullable = false)

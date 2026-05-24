@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "bills")
@@ -18,13 +19,14 @@ public class Bill {
     @Column(name = "bill_id")
     private Long billId;
 
-    // One bill per admission — enforced by UNIQUE
     @OneToOne
     @JoinColumn(name = "admission_id", nullable = false, unique = true)
+    @JsonIgnoreProperties({"bills", "patient", "hibernateLazyInitializer"})
     private Admission admission;
 
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
+    @JsonIgnoreProperties({"bills", "admissions", "hibernateLazyInitializer"})
     private Patient patient;
 
     // Room charges = daily_rate × total_days

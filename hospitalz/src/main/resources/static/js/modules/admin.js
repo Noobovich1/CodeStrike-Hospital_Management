@@ -74,14 +74,14 @@ export async function renderAdminDashboard() {
 async function loadDashboardData(container) {
     try {
         // Fetch all data in parallel for maximum speed
-        const [admissions, rooms, staff, bills, doctors] = await Promise.all([
-            api.get('/admissions/active').catch(() => []),
-            api.get('/rooms').catch(() => []),
-            api.get('/staff').catch(() => []),
-            api.get('/bills').catch(() => []),
-            api.get('/doctors').catch(() => [])
-        ]);
+        // admin.js — replace multiple api.get calls with single dashboard call
+        const stats = await api.get('/admin/dashboard');
 
+        document.getElementById('stat-admissions').textContent = stats.activeAdmissions;
+        document.getElementById('stat-rooms').textContent = stats.availableRooms;
+        document.getElementById('stat-doctors').textContent = stats.activeDoctors;
+        document.getElementById('stat-revenue').textContent = '$' + (stats.totalRevenue || 0).toFixed(2);
+        
         // Update stats
         container.querySelector('#stat-admissions').textContent = admissions.length;
         

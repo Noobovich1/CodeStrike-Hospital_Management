@@ -162,6 +162,22 @@ async function loadModule(moduleId, moduleTitle) {
                 module = await import('./modules/billing.js');
                 renderFunction = module.renderBilling;
                 break;
+            // app.js — add inside the switch statemen
+            case 'vitals':
+                // Nurse vitals tab — reuse admissions view (ward patients)
+                module = await import('./modules/admissions.js');
+                renderFunction = module.renderActiveAdmissions;
+                break;
+            case 'appointments':
+                // Receptionist appointments tab — reuse admissions view
+                module = await import('./modules/admissions.js');
+                renderFunction = module.renderActiveAdmissions;
+                break;
+            case 'my-records':
+                // Patient records tab — reuse patients view
+                module = await import('./modules/patients.js');
+                renderFunction = module.renderRegisterForm;
+                break;
             // Add other module cases as they are implemented
             default:
                 contentArea.innerHTML = `<div class="glass-panel" style="padding: 20px;">Module <strong>${moduleId}</strong> is not yet implemented.</div>`;

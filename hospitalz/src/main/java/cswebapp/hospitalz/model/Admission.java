@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "admissions")
@@ -18,12 +19,15 @@ public class Admission {
     @Column(name = "admission_id")
     private Long admissionId;
 
+    // Admission.java — replace @JsonIgnore with this
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
+    @JsonIgnoreProperties({"admissions", "treatmentRecords", "hibernateLazyInitializer"})
     private Patient patient;
 
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonIgnoreProperties({"admissions", "hibernateLazyInitializer"})
     private Room room;
 
     @Column(name = "admission_date", nullable = false)

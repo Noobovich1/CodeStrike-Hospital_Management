@@ -19,7 +19,6 @@ export async function renderActiveAdmissions() {
                 </div>
             </div>
 
-            <!-- Active Admissions Section -->
             <div id="section-active-admissions">
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -40,7 +39,6 @@ export async function renderActiveAdmissions() {
                 </div>
             </div>
 
-            <!-- Admissions History Section -->
             <div id="section-history-admissions" style="display: none;">
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -63,7 +61,7 @@ export async function renderActiveAdmissions() {
             </div>
         </div>
 
-        <!-- Admit Pop-up Modal -->
+        <!-- Admit Modal -->
         <div id="admit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
             <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
@@ -74,7 +72,8 @@ export async function renderActiveAdmissions() {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                         <div>
                             <label style="display: block; margin-bottom: 4px;">Patient ID *</label>
-                            <input type="text" id="admit-patient-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <input type="text" id="admit-patient-id" required placeholder="e.g. PAT-2024-0001"
+                                style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                         </div>
                         <div>
                             <label style="display: block; margin-bottom: 4px;">Room *</label>
@@ -95,7 +94,7 @@ export async function renderActiveAdmissions() {
             </div>
         </div>
 
-        <!-- Assign Doctor Pop-up Modal -->
+        <!-- Assign Doctor Modal -->
         <div id="assign-doc-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
             <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
@@ -105,12 +104,19 @@ export async function renderActiveAdmissions() {
                 <form id="assign-doc-form">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                         <div>
-                            <label style="display: block; margin-bottom: 4px;">Patient ID *</label>
-                            <input type="text" id="assign-patient-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <label style="display: block; margin-bottom: 4px;">Patient *</label>
+                            <input type="text" id="assign-patient-search" placeholder="Type name, ID or phone..."
+                                style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 4px;">
+                            <select id="assign-patient-id" required size="4"
+                                style="width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); display: none;">
+                            </select>
+                            <small id="assign-patient-hint" style="color: var(--text-secondary); font-size: 0.8em;">Type at least 2 characters to search admitted patients</small>
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 4px;">Doctor ID *</label>
-                            <input type="text" id="assign-doc-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <label style="display: block; margin-bottom: 4px;">Doctor *</label>
+                            <select id="assign-doc-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="">Loading doctors...</option>
+                            </select>
                         </div>
                         <div>
                             <label style="display: block; margin-bottom: 4px;">Primary Doctor?</label>
@@ -146,17 +152,16 @@ export async function renderActiveAdmissions() {
 async function loadAvailableRooms() {
     const select = document.getElementById('admit-room-select');
     if (!select) return;
-
     try {
         const availableRooms = await api.get('/rooms/available');
         if (availableRooms.length === 0) {
             select.innerHTML = '<option value="">No available rooms found</option>';
             return;
         }
-
-        select.innerHTML = `<option value="">Select an available room</option>` + availableRooms.map(r => `
-            <option value="${r.roomId}">Room ${r.roomNumber} - ${r.roomType} (Capacity: ${r.currentOccupancy}/${r.capacity}, $${r.dailyRate}/day)</option>
-        `).join('');
+        select.innerHTML = '<option value="">Select an available room</option>' +
+            availableRooms.map(r =>
+                `<option value="${r.roomId}">Room ${r.roomNumber} - ${r.roomType} (${r.currentOccupancy}/${r.capacity}, $${r.dailyRate}/day)</option>`
+            ).join('');
     } catch (error) {
         select.innerHTML = '<option value="">Error loading available rooms</option>';
     }
@@ -165,20 +170,17 @@ async function loadAvailableRooms() {
 async function loadActiveAdmissions() {
     const tbody = document.getElementById('admissions-table-body');
     if (!tbody) return;
-
     try {
         const admissions = await api.get('/admissions/active');
-        
         if (admissions.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">No active admissions.</td></tr>`;
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No active admissions.</td></tr>';
             return;
         }
-
         tbody.innerHTML = admissions.map(a => `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px;">${a.admissionId}</td>
-                <td style="padding: 12px; font-weight: 500;">${a.patient?.fullName || a.patient?.patientId || '-'} <span style="font-size:0.85em; color:var(--text-secondary);">(${a.patient?.patientId})</span></td>
-                <td style="padding: 12px;">Room ${a.room?.roomNumber || a.room?.roomId || '-'}</td>
+                <td style="padding: 12px; font-weight: 500;">${a.patient?.fullName || '-'} <span style="font-size:0.85em; color:var(--text-secondary);">(${a.patient?.patientId || '-'})</span></td>
+                <td style="padding: 12px;">Room ${a.room?.roomNumber || '-'}</td>
                 <td style="padding: 12px;">${new Date(a.admissionDate).toLocaleString()}</td>
                 <td style="padding: 12px;"><span style="color: var(--status-success); font-weight: 600;"><i class="fa-solid fa-bed"></i> ${a.status}</span></td>
                 <td style="padding: 12px;">
@@ -187,11 +189,10 @@ async function loadActiveAdmissions() {
             </tr>
         `).join('');
 
-        // Attach discharge event listeners safely
         document.querySelectorAll('.btn-discharge').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.id;
-                if (confirm('Are you sure you want to discharge admission ID ' + id + '?')) {
+                if (confirm('Discharge admission ID ' + id + '?')) {
                     try {
                         await api.put(`/admissions/${id}/discharge`);
                         alert('Patient discharged successfully!');
@@ -204,46 +205,44 @@ async function loadActiveAdmissions() {
                 }
             });
         });
-
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--status-danger);">Error loading data.</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--status-danger);">Error loading data.</td></tr>';
     }
 }
 
 async function loadHistoryAdmissions() {
     const tbody = document.getElementById('history-table-body');
     if (!tbody) return;
-
     try {
         const admissions = await api.get('/admissions');
-        
         if (admissions.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">No admissions history.</td></tr>`;
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No admissions history.</td></tr>';
             return;
         }
-
         tbody.innerHTML = admissions.map(a => {
             const dischargeText = a.dischargeDate ? new Date(a.dischargeDate).toLocaleString() : '-';
             const statusColor = a.status === 'ACTIVE' ? 'var(--status-success)' : 'var(--text-secondary)';
             return `
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px;">${a.admissionId}</td>
-                    <td style="padding: 12px; font-weight: 500;">${a.patient?.fullName || a.patient?.patientId || '-'} <span style="font-size:0.85em; color:var(--text-secondary);">(${a.patient?.patientId})</span></td>
-                    <td style="padding: 12px;">Room ${a.room?.roomNumber || a.room?.roomId || '-'}</td>
+                    <td style="padding: 12px; font-weight: 500;">${a.patient?.fullName || '-'} <span style="font-size:0.85em; color:var(--text-secondary);">(${a.patient?.patientId || '-'})</span></td>
+                    <td style="padding: 12px;">Room ${a.room?.roomNumber || '-'}</td>
                     <td style="padding: 12px;">${new Date(a.admissionDate).toLocaleString()}</td>
                     <td style="padding: 12px;">${dischargeText}</td>
                     <td style="padding: 12px;"><span style="color: ${statusColor}; font-weight: 600;">${a.status}</span></td>
-                    <td style="padding: 12px;">${a.totalDays !== null && a.totalDays !== undefined ? a.totalDays : '-'}</td>
+                    <td style="padding: 12px;">${a.totalDays ?? '-'}</td>
                 </tr>
             `;
         }).join('');
-
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--status-danger);">Error loading history data.</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--status-danger);">Error loading history.</td></tr>';
     }
 }
 
 function setupAdmissionsEvents(container) {
+
+    let allPatients = [];
+
     const btnActiveTab = container.querySelector('#btn-tab-active');
     const btnHistoryTab = container.querySelector('#btn-tab-history');
     const sectionActive = container.querySelector('#section-active-admissions');
@@ -259,7 +258,6 @@ function setupAdmissionsEvents(container) {
     const btnCloseAssign = container.querySelector('#close-assign-doc-modal');
     const btnCancelAssign = container.querySelector('#btn-cancel-assign');
 
-    // Tab Switching
     btnActiveTab.addEventListener('click', () => {
         sectionActive.style.display = 'block';
         sectionHistory.style.display = 'none';
@@ -275,36 +273,115 @@ function setupAdmissionsEvents(container) {
         loadHistoryAdmissions();
     });
 
-    // Modals
-    btnAdmit.onclick = () => { 
-        modalAdmit.style.display = 'flex'; 
+    btnAdmit.onclick = () => {
+        modalAdmit.style.display = 'flex';
         loadAvailableRooms();
     };
-    
-    const closeAdmit = () => { 
-        modalAdmit.style.display = 'none'; 
-        container.querySelector('#admit-form').reset(); 
+
+    const closeAdmit = () => {
+        modalAdmit.style.display = 'none';
+        container.querySelector('#admit-form').reset();
     };
     btnCancelAdmit.onclick = closeAdmit;
     btnCloseAdmit.onclick = closeAdmit;
 
-    btnAssign.onclick = () => { 
-        modalAssign.style.display = 'flex'; 
-    };
-    
-    const closeAssign = () => { 
-        modalAssign.style.display = 'none'; 
-        container.querySelector('#assign-doc-form').reset(); 
+    const closeAssign = () => {
+        modalAssign.style.display = 'none';
+        container.querySelector('#assign-doc-form').reset();
+        container.querySelector('#assign-patient-search').value = '';
+        container.querySelector('#assign-patient-id').style.display = 'none';
+        container.querySelector('#assign-patient-hint').textContent = 'Type at least 2 characters to search admitted patients';
     };
     btnCancelAssign.onclick = closeAssign;
     btnCloseAssign.onclick = closeAssign;
 
+    btnAssign.onclick = async () => {
+        modalAssign.style.display = 'flex';
+
+        // Load doctors
+        try {
+            const doctors = await api.get('/doctors/active');
+            const doctorSelect = container.querySelector('#assign-doc-id');
+            doctorSelect.innerHTML = '<option value="">Select doctor</option>' +
+                doctors.map(d =>
+                    `<option value="${d.doctorId}">${d.fullName} - ${d.specialisation}</option>`
+                ).join('');
+        } catch (e) {
+            container.querySelector('#assign-doc-id').innerHTML = '<option value="">Error loading doctors</option>';
+        }
+
+        // Pre-load patients
+        try {
+            allPatients = await api.get('/patients');
+        } catch (e) {
+            console.error('Failed to preload patients', e);
+        }
+
+        const searchInput = container.querySelector('#assign-patient-search');
+        const patientSelect = container.querySelector('#assign-patient-id');
+        const hint = container.querySelector('#assign-patient-hint');
+        const selectedDisplay = container.querySelector('#assign-patient-selected');
+
+        // Reset state
+        patientSelect.style.display = 'none';
+        patientSelect.removeAttribute('required');
+        searchInput.value = '';
+        hint.textContent = 'Type at least 2 characters to search admitted patients';
+
+        searchInput.oninput = () => {
+            const query = searchInput.value.toLowerCase().trim();
+
+            if (query.length < 2) {
+                patientSelect.style.display = 'none';
+                hint.textContent = 'Type at least 2 characters to search admitted patients';
+                return;
+            }
+
+            const matches = allPatients.filter(p =>
+                p.status?.toUpperCase() === 'ADMITTED' &&
+                (
+                    p.fullName?.toLowerCase().includes(query) ||
+                    p.patientId?.toLowerCase().includes(query) ||
+                    p.phoneNumber?.includes(query)
+                )
+            );
+
+            if (matches.length === 0) {
+                patientSelect.style.display = 'none';
+                hint.textContent = `No admitted patients matching "${searchInput.value}"`;
+                return;
+            }
+
+            // Rebuild options
+            patientSelect.innerHTML = matches.map(p =>
+                `<option value="${p.patientId}">${p.fullName} (${p.patientId})</option>`
+            ).join('');
+            patientSelect.style.display = 'block';
+            hint.textContent = `${matches.length} result(s) — click to select`;
+
+            if (matches.length === 1) {
+                patientSelect.selectedIndex = 0;
+                hint.textContent = `✓ Selected: ${matches[0].fullName} (${matches[0].patientId})`;
+            }
+        };
+
+        // When user clicks an option — show confirmation
+        patientSelect.onchange = () => {
+            const selected = patientSelect.options[patientSelect.selectedIndex];
+            if (selected && selected.value) {
+                hint.textContent = `✓ Selected: ${selected.text}`;
+                searchInput.value = selected.text; // fill search box with selected name
+            }
+        };
+    };
+
+    // Admit form submit
     container.querySelector('#admit-form').onsubmit = async (e) => {
         e.preventDefault();
         const payload = {
-            patientId: document.getElementById('admit-patient-id').value,
-            roomId: parseInt(document.getElementById('admit-room-select').value, 10),
-            notes: document.getElementById('admit-notes').value
+            patientId: container.querySelector('#admit-patient-id').value,
+            roomId: parseInt(container.querySelector('#admit-room-select').value, 10),
+            notes: container.querySelector('#admit-notes').value
         };
         try {
             await api.post('/admissions', payload);
@@ -313,25 +390,43 @@ function setupAdmissionsEvents(container) {
             loadActiveAdmissions();
             loadHistoryAdmissions();
             loadAvailableRooms();
-        } catch (err) { 
-            alert('Error: ' + err.message); 
+        } catch (err) {
+            alert('Error: ' + err.message);
         }
     };
 
+    // Assign doctor form submit
     container.querySelector('#assign-doc-form').onsubmit = async (e) => {
         e.preventDefault();
+
+        const patientSelect = container.querySelector('#assign-patient-id');
+        const patientId = patientSelect.value;
+
+        if (!patientId) {
+            alert('Please search and select an admitted patient first.');
+            container.querySelector('#assign-patient-search').focus();
+            return;
+        }
+
+        const doctorId = container.querySelector('#assign-doc-id').value;
+        if (!doctorId) {
+            alert('Please select a doctor.');
+            return;
+        }
+
         const payload = {
-            patientId: document.getElementById('assign-patient-id').value,
-            doctorId: document.getElementById('assign-doc-id').value,
-            isPrimary: document.getElementById('assign-primary').value === 'true',
-            notes: document.getElementById('assign-notes').value
+            patientId: patientId,
+            doctorId: doctorId,
+            isPrimary: container.querySelector('#assign-primary').value === 'true',
+            notes: container.querySelector('#assign-notes').value
         };
+
         try {
             await api.post('/doctor-patient', payload);
             alert('Doctor assigned to patient!');
             closeAssign();
-        } catch (err) { 
-            alert('Error: ' + err.message); 
+        } catch (err) {
+            alert('Error: ' + err.message);
         }
     };
 }

@@ -29,5 +29,4 @@ public class PatientController {
     public ResponseEntity<Patient> getPatientById(@PathVariable String id) {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
-
 }

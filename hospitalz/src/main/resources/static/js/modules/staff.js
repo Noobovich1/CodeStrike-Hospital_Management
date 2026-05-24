@@ -171,7 +171,7 @@ export async function renderStaffList() {
     return container;
 }
 
-async function loadStaffData() {
+async function loadStaffData(container) {
     const tbody = document.getElementById('staff-table-body');
     if (!tbody) return;
     try {
@@ -206,13 +206,13 @@ async function loadStaffData() {
         }).join('');
 
         // Attach listeners safely
-        document.querySelectorAll('.btn-edit-staff').forEach(btn => {
+        container.querySelectorAll('.btn-edit-staff').forEach(btn => {
             btn.onclick = async () => {
                 await openEditStaffForm(btn.dataset.id);
             };
         });
 
-        document.querySelectorAll('.btn-deactivate-staff').forEach(btn => {
+        container.querySelectorAll('.btn-deactivate-staff').forEach(btn => {
             btn.onclick = async () => {
                 const staffId = btn.dataset.id;
                 if (confirm(`Are you sure you want to deactivate staff ID ${staffId}?`)) {
@@ -232,7 +232,7 @@ async function loadStaffData() {
     }
 }
 
-async function loadDoctorData() {
+async function loadDoctorData(container) {
     const tbody = document.getElementById('doctor-table-body');
     if (!tbody) return;
     try {
@@ -266,13 +266,13 @@ async function loadDoctorData() {
         }).join('');
 
         // Attach listeners safely
-        document.querySelectorAll('.btn-edit-doc').forEach(btn => {
+        container.querySelectorAll('.btn-edit-doc').forEach(btn => {
             btn.onclick = async () => {
                 await openEditDocForm(btn.dataset.id);
             };
         });
 
-        document.querySelectorAll('.btn-deactivate-doc').forEach(btn => {
+        container.querySelectorAll('.btn-deactivate-doc').forEach(btn => {
             btn.onclick = async () => {
                 const doctorId = btn.dataset.id;
                 if (confirm(`Are you sure you want to deactivate doctor ID ${doctorId}?`)) {
@@ -449,3 +449,9 @@ function setupEvents(container) {
         }
     };
 }
+
+setTimeout(() => {
+    loadStaffData(container);    // ← pass container
+    loadDoctorData(container);   // ← pass container
+    setupEvents(container);
+}, 0);

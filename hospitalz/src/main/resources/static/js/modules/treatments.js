@@ -158,8 +158,8 @@ async function loadMasterTreatments(container) {
   const select = container.querySelector("#presc-treatment-id");
 
   try {
-    const treatments = await api.get("/treatments");
-
+    const treatments = await api.get("/treatments/active");
+    
     if (treatments.length === 0) {
       tbody.innerHTML =
         '<tr><td colspan="6" style="text-align:center; padding: 20px;">No treatments found.</td></tr>';

@@ -36,7 +36,7 @@ async function request(endpoint, options = {}) {
       let errorMessage = "API Error";
       try {
         const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
+        errorMessage = errorData.error || errorData.message || errorMessage;
       } catch (e) {
         // If it's not JSON, read text
         errorMessage = (await response.text()) || errorMessage;
