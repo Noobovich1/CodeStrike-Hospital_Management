@@ -197,15 +197,15 @@ async function loadModule(moduleId, moduleTitle) {
 }
 
 function checkAuth() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token) {
         window.location.href = '/auth.html';
         return false;
     }
     
-    // Lấy thông tin từ localStorage để hiển thị UI
-    currentRole = localStorage.getItem('role') || 'PATIENT';
-    const username = localStorage.getItem('username');
+    // Lấy thông tin từ localStorage hoặc sessionStorage để hiển thị UI
+    currentRole = localStorage.getItem('role') || sessionStorage.getItem('role') || 'PATIENT';
+    const username = localStorage.getItem('username') || sessionStorage.getItem('username');
     
     // Cập nhật tên hiển thị trên sidebar
     document.querySelector('.user-name').textContent = username || 'User';
@@ -216,7 +216,11 @@ function checkAuth() {
 
 // Thêm nút Logout trong Sidebar UI (tùy chọn) hoặc JS
 function logout() {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    localStorage.removeItem("doctorId");
+    sessionStorage.clear();
     window.location.href = '/auth.html';
 }
 
