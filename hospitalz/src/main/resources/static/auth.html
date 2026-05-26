@@ -66,13 +66,88 @@
         box-shadow: 0 6px 16px rgba(0,0,0,0.15);
         color: var(--accent-primary);
       }
+      .alert-msg {
+        display: none;
+        padding: 14px 16px;
+        border-radius: 10px;
+        margin-bottom: 18px;
+        font-size: 14px;
+        font-weight: 500;
+        animation: fadeIn 0.3s ease;
+        border: 1px solid transparent;
+      }
+
+      .alert-success {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border-color: rgba(34, 197, 94, 0.4);
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.15);
+      }
+
+      .alert-error {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.4);
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+      }
+
+      .alert-info {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.15);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      input[type="password"]::-ms-reveal,
+      input[type="password"]::-ms-clear {
+        display: none;
+      }
+
+      input[type="password"]::-webkit-credentials-auto-fill-button,
+      input[type="password"]::-webkit-textfield-decoration-container {
+        display: none !important;
+      }
+      .password-wrapper {
+        position: relative;
+      }
+
+      .password-wrapper input {
+        padding-right: 50px;
+      }
+
+      .toggle-password {
+        position: absolute;
+        right: 16px;
+        top: 58%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #666;
+        font-size: 18px;
+        transition: 0.2s;
+      }
+
+      .toggle-password:hover {
+        color: var(--accent-primary);
+      }
     </style>
   </head>
   <body>
     <button id="theme-toggle" title="Toggle Theme">
       <i class="fa-solid fa-moon"></i>
     </button>
-    <div class="login-container">
+    <!-- LOGIN SECTION -->
+    <div class="login-container" id="login-section" style="display: none;">
       <div class="glass-panel login-box">
         <h2 style="text-align: center; margin-bottom: 30px">Hospitalz Login</h2>
         <div
@@ -90,15 +165,99 @@
             />
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="password" required placeholder="pass" />
+          <label>Password</label>
+
+          <div class="password-wrapper">
+            <input
+              type="password"
+              id="password"
+              required
+              placeholder="pass"
+            />
+
+            <i
+              class="fa-solid fa-eye toggle-password"
+              onclick="togglePassword('password', this)"
+            ></i>
           </div>
+        </div>
           <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 20px;">
             <input type="checkbox" id="rememberMe" style="width: auto; margin-top: 0; cursor: pointer;" />
             <label for="rememberMe" style="cursor: pointer; user-select: none;">Remember me</label>
           </div>
           <button type="submit">Login</button>
         </form>
+        <div style="text-align: center; margin-top: 20px">
+          Don't have an account?
+          <a
+            href="#"
+            onclick="toggleForms()"
+            style="color: var(--accent-primary)"
+          >
+            Register here
+          </a>
+        </div>
+      </div>
+    </div>
+
+     <!-- REGISTER SECTION -->
+    <div
+      class="login-container"
+      id="register-section"
+      style="display: flex"
+    >
+      <div class="glass-panel login-box">
+        <h2 style="text-align: center; margin-bottom: 30px">
+          Create Account
+        </h2>
+
+        <div
+          id="reg-alert"
+          style="margin-bottom: 10px; display: none"
+        ></div>
+
+        <form id="register-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input
+              type="text"
+              id="reg-username"
+              required
+              placeholder="Choose a username"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="reg-password"
+                required
+                placeholder="Create a password"
+              />
+
+              <i
+                class="fa-solid fa-eye toggle-password"
+                onclick="togglePassword('reg-password', this)"
+              ></i>
+            </div>
+          </div>
+
+          <button type="submit">Register</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px">
+          Already have an account?
+          <a
+            href="#"
+            onclick="toggleForms()"
+            style="color: var(--accent-primary)"
+          >
+            Login here
+          </a>
+        </div>
       </div>
     </div>
 
@@ -133,6 +292,24 @@
         window.location.href = "/index.html";
       }
 
+       // Hàm chuyển đổi giữa Form Đăng nhập và Đăng ký
+      function toggleForms() {
+          const loginSec = document.getElementById('login-section');
+          const regSec = document.getElementById('register-section');
+          
+          if (loginSec.style.display === 'none') {
+              loginSec.style.display = 'flex';
+              regSec.style.display = 'none';
+          } else {
+              loginSec.style.display = 'none';
+              regSec.style.display = 'flex';
+          }
+          
+          // Clear alerts when toggling
+          document.getElementById('login-error').style.display = 'none';
+          document.getElementById('reg-alert').style.display = 'none';
+      }
+         // 1. Xử lý ĐĂNG NHẬP 
       document
         .getElementById("login-form")
         .addEventListener("submit", async (e) => {
@@ -182,6 +359,90 @@
             console.error(err);
           }
         });
+
+      // 2. Xử lý ĐĂNG KÝ
+      document.getElementById("register-form").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const username = document.getElementById("reg-username").value;
+          const password = document.getElementById("reg-password").value;
+          const alertBox = document.getElementById("reg-alert");
+
+           // Định nghĩa Regex
+          const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\W]{8,}$/;
+
+
+          // Kiểm tra Username
+          if (!usernameRegex.test(username)) {
+              alertBox.className = "alert-msg alert-error";
+              alertBox.innerText = "Invalid Username! Must be 3-20 characters, using only letters, numbers, and underscores.";
+              alertBox.style.display = "block";
+              return;
+          }
+
+          // Kiểm tra Password
+          if (!passwordRegex.test(password)) {
+              alertBox.className = "alert-msg alert-error";
+              alertBox.innerText = "Invalid Password! Must be at least 8 characters, include 1 uppercase, 1 lowercase, and 1 number.";
+              alertBox.style.display = "block";
+              return;
+          }
+
+          // Kiểm tra định dạng username
+          if (!usernameRegex.test(username)) {
+            alertBox.className = "alert-msg alert-error";
+            alertBox.innerText = "Username must be 3-20 characters long and contain only letters, numbers, and underscores.";
+            alertBox.style.display = "block";
+            return;
+          }
+
+          // Kiểm tra định dạng password
+          if (!passwordRegex.test(password)) {
+            alertBox.className = "alert-msg alert-error";
+            alertBox.innerText = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one digit.";
+            alertBox.style.display = "block";
+            return;
+          }
+
+          try {
+            const response = await fetch("/api/v1/auth/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password, role: "PATIENT" }),
+            });
+
+            if (response.ok) {
+              alertBox.className = "alert-msg alert-success";
+              alertBox.innerText = "Account created successfully! Please login.";
+              alertBox.style.display = "block";
+              document.getElementById("register-form").reset();
+              
+              // Tự động chuyển về tab Login sau 2 giây
+              setTimeout(() => toggleForms(), 2000);
+            } else {
+              const errData = await response.json().catch(()=>({}));
+              alertBox.className = "alert-msg alert-error";
+              alertBox.innerText = errData.error || "Failed to register. Username might exist.";
+              alertBox.style.display = "block";
+            }
+          } catch (err) {
+            console.error(err);
+            alertBox.className = "alert-msg alert-error";
+            alertBox.innerText = "Network error. Please try again.";
+            alertBox.style.display = "block";
+          }
+      });
+      function togglePassword(inputId, icon) {
+          const input = document.getElementById(inputId);
+
+          if (input.type === "password") {
+              input.type = "text";
+              icon.classList.replace("fa-eye", "fa-eye-slash");
+          } else {
+              input.type = "password";
+              icon.classList.replace("fa-eye-slash", "fa-eye");
+          }
+      }
     </script>
   </body>
 </html>
