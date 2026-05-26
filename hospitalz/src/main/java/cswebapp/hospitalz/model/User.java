@@ -1,5 +1,7 @@
 package cswebapp.hospitalz.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,6 +16,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @JsonIgnore // THÊM DÒNG NÀY ĐỂ ẨN PASSWORD KHI GỌI API
     @Column(nullable = false)
     private String password;
 

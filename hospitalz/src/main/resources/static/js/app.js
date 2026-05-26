@@ -16,6 +16,7 @@ const roleConfig = {
         name: 'Admin',
         menu: [
             { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
+            { id: 'users', icon: 'fa-user-shield', label: 'User Roles' },
             { id: 'staff', icon: 'fa-users-gear', label: 'Staff Management' },
             { id: 'rooms', icon: 'fa-door-open', label: 'Room Management' },
             { id: 'register', icon: 'fa-address-card', label: 'Patient Management' },
@@ -132,6 +133,10 @@ async function loadModule(moduleId, moduleTitle) {
             case 'dashboard':
                 module = await import('./modules/admin.js');
                 renderFunction = module.renderAdminDashboard;
+                break;
+            case 'users': 
+                module = await import('./modules/users.js');
+                renderFunction = module.renderUsersList;
                 break;
             case 'staff':
                 module = await import('./modules/staff.js');
