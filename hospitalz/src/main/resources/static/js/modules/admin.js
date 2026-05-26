@@ -81,36 +81,22 @@ async function loadDashboardData(container) {
         document.getElementById('stat-rooms').textContent = stats.availableRooms;
         document.getElementById('stat-doctors').textContent = stats.activeDoctors;
         document.getElementById('stat-revenue').textContent = '$' + (stats.totalRevenue || 0).toFixed(2);
-        
-        // Update stats
-        container.querySelector('#stat-admissions').textContent = admissions.length;
-        
-        const availableRooms = rooms.filter(r => r.status === 'AVAILABLE').length;
-        container.querySelector('#stat-rooms').textContent = availableRooms;
-        
-        const activeDoctors = doctors.filter(d => d.isActive).length;
-        container.querySelector('#stat-doctors').textContent = activeDoctors;
-
-        const totalRevenue = bills.reduce((sum, b) => sum + (b.paidAmount || 0), 0);
-        container.querySelector('#stat-revenue').textContent = '$' + totalRevenue.toFixed(2);
 
         // Render Charts
-        renderCharts(container, rooms, bills);
+        renderCharts(container, stats.roomOccupancy, stats.bills || []);
     } catch (e) {
         console.error("Dashboard error:", e);
     }
 }
 
-function renderCharts(container, rooms, bills) {
+function renderCharts(container, roomOccupancy, bills) {
     const ctxOcc = container.querySelector('#occupancyChart').getContext('2d');
     const ctxRev = container.querySelector('#revenueChart').getContext('2d');
 
-    const roomTypes = [...new Set(rooms.map(r => r.roomType))];
+    const roomTypes = Object.keys(roomOccupancy || {});
     const occupancyData = roomTypes.map(type => {
-        const typeRooms = rooms.filter(r => r.roomType === type);
-        const capacity = typeRooms.reduce((sum, r) => sum + r.capacity, 0);
-        const occupied = typeRooms.reduce((sum, r) => sum + r.currentOccupancy, 0);
-        return capacity > 0 ? (occupied / capacity) * 100 : 0;
+        const occ = roomOccupancy[type] || { capacity: 0, occupied: 0 };
+        return occ.capacity > 0 ? (occ.occupied / occ.capacity) * 100 : 0;
     });
 
     new Chart(ctxOcc, {

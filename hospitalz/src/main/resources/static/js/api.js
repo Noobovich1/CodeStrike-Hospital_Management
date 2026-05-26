@@ -3,7 +3,7 @@
 const API_BASE = "/api/v1";
 
 async function request(endpoint, options = {}) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
   const headers = {
     "Content-Type": "application/json",
@@ -29,6 +29,10 @@ async function request(endpoint, options = {}) {
         localStorage.removeItem("role");
         localStorage.removeItem("username");
         localStorage.removeItem("doctorId");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("role");
+        sessionStorage.removeItem("username");
+        sessionStorage.removeItem("doctorId");
         window.location.href = "/auth.html";
         throw new Error("Unauthorized");
       }

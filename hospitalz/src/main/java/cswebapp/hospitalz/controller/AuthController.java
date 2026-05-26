@@ -36,7 +36,7 @@ public class AuthController {
 
         // passwordEncoder.matches(mật_khẩu_nhập_vào, mật_khẩu_đã_mã_hóa_trong_db)
         if (user != null && passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
+            String token = jwtService.generateToken(user.getUsername(), user.getRole().name(), request.isRememberMe());
             Map<String, Object> response = new java.util.HashMap<>();
             response.put("token", token);
             response.put("role", user.getRole().name());

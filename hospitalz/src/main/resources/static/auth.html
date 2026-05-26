@@ -43,6 +43,29 @@
         cursor: pointer;
         font-weight: bold;
       }
+      #theme-toggle {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-primary);
+        box-shadow: var(--shadow-md);
+        transition: all 0.2s ease;
+        z-index: 1000;
+      }
+      #theme-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        color: var(--accent-primary);
+      }
       .alert-msg {
         display: none;
         padding: 14px 16px;
@@ -120,6 +143,9 @@
     </style>
   </head>
   <body>
+    <button id="theme-toggle" title="Toggle Theme">
+      <i class="fa-solid fa-moon"></i>
+    </button>
     <!-- LOGIN SECTION -->
     <div class="login-container" id="login-section" style="display: none;">
       <div class="glass-panel login-box">
@@ -155,6 +181,10 @@
             ></i>
           </div>
         </div>
+          <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 20px;">
+            <input type="checkbox" id="rememberMe" style="width: auto; margin-top: 0; cursor: pointer;" />
+            <label for="rememberMe" style="cursor: pointer; user-select: none;">Remember me</label>
+          </div>
           <button type="submit">Login</button>
         </form>
         <div style="text-align: center; margin-top: 20px">
@@ -232,6 +262,36 @@
     </div>
 
     <script>
+      // Theme Management for Auth Page
+      const savedTheme = localStorage.getItem("theme") || "light";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+
+      function updateThemeIcon(theme) {
+        const icon = document.querySelector("#theme-toggle i");
+        if (icon) {
+          if (theme === "dark") {
+            icon.className = "fa-solid fa-sun";
+          } else {
+            icon.className = "fa-solid fa-moon";
+          }
+        }
+      }
+
+      // Initialize icon on page load
+      updateThemeIcon(savedTheme);
+
+      document.getElementById("theme-toggle").addEventListener("click", () => {
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        updateThemeIcon(newTheme);
+      });
+
+      if (localStorage.getItem("token") || sessionStorage.getItem("token")) {
+        window.location.href = "/index.html";
+      }
+
        // Hàm chuyển đổi giữa Form Đăng nhập và Đăng ký
       function toggleForms() {
           const loginSec = document.getElementById('login-section');
@@ -256,24 +316,37 @@
           e.preventDefault();
           const username = document.getElementById("username").value;
           const password = document.getElementById("password").value;
+          const rememberMe = document.getElementById("rememberMe").checked;
 
           try {
             const response = await fetch("/api/v1/auth/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username, password }),
+              body: JSON.stringify({ username, password, rememberMe }),
             });
 
             if (response.ok) {
               const data = await response.json();
-              // Lưu thông tin vào LocalStorage
-              localStorage.setItem("token", data.token);
-              localStorage.setItem("role", data.role);
-              localStorage.setItem("username", data.username);
+              
+              // Select storage based on rememberMe
+              const storage = rememberMe ? localStorage : sessionStorage;
+
+              // Clear old tokens to avoid conflict
+              localStorage.removeItem("token");
+              localStorage.removeItem("role");
+              localStorage.removeItem("username");
+              localStorage.removeItem("doctorId");
+              sessionStorage.removeItem("token");
+              sessionStorage.removeItem("role");
+              sessionStorage.removeItem("username");
+              sessionStorage.removeItem("doctorId");
+
+              // Save to selected storage
+              storage.setItem("token", data.token);
+              storage.setItem("role", data.role);
+              storage.setItem("username", data.username);
               if (data.doctorId) {
-                localStorage.setItem("doctorId", data.doctorId);
-              } else {
-                localStorage.removeItem("doctorId");
+                storage.setItem("doctorId", data.doctorId);
               }
               // Chuyển hướng về trang chủ
               window.location.href = "/index.html";
