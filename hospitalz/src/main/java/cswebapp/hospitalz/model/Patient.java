@@ -54,4 +54,8 @@ public class Patient {
 
     @Column(name = "status")
     private PatientStatus status = PatientStatus.OUTPATIENT;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
 }

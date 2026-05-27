@@ -27,6 +27,7 @@ const roleConfig = {
         name: 'Doctor',
         menu: [
             { id: 'my-patients', icon: 'fa-user-injured', label: 'My Patients' },
+            { id: 'appointments', icon: 'fa-calendar-check', label: 'My Appointments' },
             { id: 'prescriptions', icon: 'fa-pills', label: 'Prescriptions' }
         ]
     },
@@ -54,7 +55,8 @@ const roleConfig = {
         name: 'Patient',
         menu: [
             { id: 'my-records', icon: 'fa-folder-open', label: 'My Records' },
-            { id: 'my-bills', icon: 'fa-file-invoice-dollar', label: 'My Bills' }
+            { id: 'my-bills', icon: 'fa-file-invoice-dollar', label: 'My Bills' },
+            { id: 'appointments', icon: 'fa-calendar-check', label: 'Book Appointment' }
         ]
     }
 };
@@ -174,9 +176,8 @@ async function loadModule(moduleId, moduleTitle) {
                 renderFunction = module.renderActiveAdmissions;
                 break;
             case 'appointments':
-                // Receptionist appointments tab — reuse admissions view
-                module = await import('./modules/admissions.js');
-                renderFunction = module.renderActiveAdmissions;
+                module = await import('./modules/appointments.js');
+                renderFunction = module.renderAppointments;
                 break;
             case 'my-records':
                 // Patient records tab — reuse patients view
@@ -268,15 +269,18 @@ function init() {
     initResponsiveUI();
     
     // Setup Role Switcher
-    roleSelect.value = currentRole;
-    roleSelect.addEventListener('change', (e) => {
-        currentRole = e.target.value;
-        Object.keys(moduleCache).forEach(k => delete moduleCache[k]); // ← clear cache on role switch
-        displayRole.textContent = roleConfig[currentRole].name;
-        renderSidebar();
-        const firstModule = roleConfig[currentRole].menu[0];
-        if (firstModule) loadModule(firstModule.id, firstModule.label);
-    });
+    if (roleSelect) {
+        roleSelect.value = currentRole;
+        roleSelect.addEventListener('change', (e) => {
+            currentRole = e.target.value;
+            localStorage.setItem('role', currentRole); // ← sync role with modules reading from localStorage
+            Object.keys(moduleCache).forEach(k => delete moduleCache[k]); // ← clear cache on role switch
+            displayRole.textContent = roleConfig[currentRole].name;
+            renderSidebar();
+            const firstModule = roleConfig[currentRole].menu[0];
+            if (firstModule) loadModule(firstModule.id, firstModule.label);
+        });
+    }
 
     // Setup Logout
     const logoutBtn = document.getElementById('logout-btn');

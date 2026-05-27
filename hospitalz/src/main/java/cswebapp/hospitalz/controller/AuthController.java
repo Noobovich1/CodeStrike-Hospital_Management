@@ -2,9 +2,11 @@ package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
 import cswebapp.hospitalz.model.Doctor;
+import cswebapp.hospitalz.model.Patient;
 import cswebapp.hospitalz.model.User;
 import cswebapp.hospitalz.model.UserRole;
 import cswebapp.hospitalz.repository.DoctorRepository;
+import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,9 @@ public class AuthController {
 
     @Autowired
     private DoctorRepository doctorRepository;
+
+    @Autowired
+    private PatientRepository patientRepository;
 
     @Autowired
     private JwtService jwtService;
@@ -46,6 +51,11 @@ public class AuthController {
                 Doctor doctor = doctorRepository.findByUser_Id(user.getId()).orElse(null);
                 if (doctor != null) {
                     response.put("doctorId", doctor.getDoctorId());
+                }
+            } else if ("PATIENT".equals(user.getRole().name())) {
+                Patient patient = patientRepository.findByUser_Id(user.getId()).orElse(null);
+                if (patient != null) {
+                    response.put("patientId", patient.getPatientId());
                 }
             }
 

@@ -1,8 +1,6 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.AdmissionStatus;
-import cswebapp.hospitalz.model.PaymentStatus;
-import cswebapp.hospitalz.model.RoomStatus;
 import cswebapp.hospitalz.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

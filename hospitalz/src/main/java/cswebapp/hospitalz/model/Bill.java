@@ -45,6 +45,10 @@ public class Bill {
     @Column(name = "other_charges")
     private Double otherCharges = 0.0;
 
+    // Outpatient appointment consultation charges
+    @Column(name = "outpatient_charges")
+    private Double outpatientCharges = 0.0;
+
     // Percentage discount (0-100)
     @Column(name = "discount")
     private Double discount = 0.0;

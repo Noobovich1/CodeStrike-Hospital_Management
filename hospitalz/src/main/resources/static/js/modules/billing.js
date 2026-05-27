@@ -2,7 +2,7 @@ import { api } from '../api.js';
 
 export async function renderBilling() {
     const container = document.createElement('div');
-    const role = localStorage.getItem('role') || '';
+    const role = localStorage.getItem('role') || sessionStorage.getItem('role') || '';
     const isAdmin = role === 'ADMIN';
     
     container.innerHTML = `
@@ -137,7 +137,7 @@ export async function renderBilling() {
 
 async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = '') {
     const tbody = container.querySelector('#bills-table-body');
-    const isPatient = localStorage.getItem('role') === 'PATIENT';
+    const isPatient = (localStorage.getItem('role') || sessionStorage.getItem('role')) === 'PATIENT';
 
     try {
         let bills = [];
@@ -241,6 +241,14 @@ async function showBillDetails(billId, container) {
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 8px 0;">Treatment Charges</td>
                     <td style="padding: 8px 0; text-align: right;">$${(bill.treatmentCharges || 0).toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px 0;">Doctor consultation charges (Inpatient)</td>
+                    <td style="padding: 8px 0; text-align: right;">$${(bill.doctorCharges || 0).toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px 0;">Outpatient appointment charges</td>
+                    <td style="padding: 8px 0; text-align: right;">$${(bill.outpatientCharges || 0).toFixed(2)}</td>
                 </tr>
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 8px 0;">Discount (${bill.discount}%)</td>
