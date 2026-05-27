@@ -54,11 +54,13 @@
                     <h1 id="page-title">Dashboard</h1>
                 </div>
                 <div class="topbar-right">
-
-                    
                     <!-- Theme Toggle -->
                     <button class="theme-toggle" id="theme-toggle" title="Toggle Dark/Light Mode">
                         <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <!-- Settings Button -->
+                    <button class="theme-toggle" id="settings-btn" title="Settings">
+                        <i class="fa-solid fa-gear"></i>
                     </button>
                 </div>
             </header>
@@ -71,6 +73,153 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal-overlay" id="settings-modal-overlay">
+        <div class="settings-modal-container glass-panel" id="settings-modal-container">
+            <div class="settings-modal-header">
+                <div class="settings-modal-title">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </div>
+                <button class="settings-modal-close" id="settings-modal-close">&times;</button>
+            </div>
+            
+            <div class="settings-tabs">
+                <button class="settings-tab-btn active" data-tab="tab-password">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Change Password</span>
+                </button>
+                <button class="settings-tab-btn" data-tab="tab-profile" id="settings-tab-profile-btn" style="display: none;">
+                    <i class="fa-solid fa-user"></i>
+                    <span>My Profile</span>
+                </button>
+            </div>
+            
+            <!-- Alert Container -->
+            <div class="settings-alert settings-alert-success" id="settings-alert-success"></div>
+            <div class="settings-alert settings-alert-error" id="settings-alert-error"></div>
+            
+            <!-- Change Password Panel -->
+            <div class="settings-tab-panel active" id="tab-password">
+                <form id="settings-password-form">
+                    <div class="settings-form-group">
+                        <label for="settings-current-password">Current Password</label>
+                        <div class="settings-input-wrapper">
+                            <input type="password" id="settings-current-password" required placeholder="Enter current password">
+                            <button type="button" class="settings-toggle-pass" data-target="settings-current-password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-form-group">
+                        <label for="settings-new-password">New Password</label>
+                        <div class="settings-input-wrapper">
+                            <input type="password" id="settings-new-password" required placeholder="At least 8 chars, 1 uppercase, 1 lowercase, 1 number">
+                            <button type="button" class="settings-toggle-pass" data-target="settings-new-password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-form-group">
+                        <label for="settings-confirm-password">Confirm New Password</label>
+                        <div class="settings-input-wrapper">
+                            <input type="password" id="settings-confirm-password" required placeholder="Re-enter new password">
+                            <button type="button" class="settings-toggle-pass" data-target="settings-confirm-password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-footer">
+                        <button type="button" class="settings-btn-cancel settings-close-trigger">Cancel</button>
+                        <button type="submit" class="settings-btn-save">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- My Profile Panel (Patient only) -->
+            <div class="settings-tab-panel" id="tab-profile">
+                <form id="settings-profile-form">
+                    <div class="settings-grid-2">
+                        <div class="settings-form-group">
+                            <label>Patient ID</label>
+                            <div style="margin-top: 4px;">
+                                <span id="settings-profile-patient-id" class="settings-badge-read-only">N/A</span>
+                            </div>
+                        </div>
+                        <div class="settings-form-group">
+                            <label>Blood Group</label>
+                            <div style="margin-top: 4px;">
+                                <span id="settings-profile-blood-group" class="settings-badge-blood">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-form-group">
+                        <label for="settings-profile-fullname">Full Name</label>
+                        <div class="settings-input-wrapper">
+                            <input type="text" id="settings-profile-fullname" required>
+                        </div>
+                    </div>
+                    <div class="settings-grid-2">
+                        <div class="settings-form-group">
+                            <label for="settings-profile-dob">Date of Birth</label>
+                            <div class="settings-input-wrapper">
+                                <input type="date" id="settings-profile-dob" required>
+                            </div>
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="settings-profile-gender">Gender</label>
+                            <div class="settings-input-wrapper">
+                                <select id="settings-profile-gender" required>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-grid-2">
+                        <div class="settings-form-group">
+                            <label for="settings-profile-phone">Phone Number</label>
+                            <div class="settings-input-wrapper">
+                                <input type="tel" id="settings-profile-phone" required>
+                            </div>
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="settings-profile-email">Email Address</label>
+                            <div class="settings-input-wrapper">
+                                <input type="email" id="settings-profile-email">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-form-group">
+                        <label for="settings-profile-address">Address</label>
+                        <div class="settings-input-wrapper">
+                            <textarea id="settings-profile-address" rows="2" placeholder="Street, City..."></textarea>
+                        </div>
+                    </div>
+                    <div class="settings-grid-2">
+                        <div class="settings-form-group">
+                            <label for="settings-profile-emergency-name">Emergency Contact Name</label>
+                            <div class="settings-input-wrapper">
+                                <input type="text" id="settings-profile-emergency-name">
+                            </div>
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="settings-profile-emergency-phone">Emergency Contact Phone</label>
+                            <div class="settings-input-wrapper">
+                                <input type="tel" id="settings-profile-emergency-phone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-footer">
+                        <button type="button" class="settings-btn-cancel settings-close-trigger">Cancel</button>
+                        <button type="submit" class="settings-btn-save">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->

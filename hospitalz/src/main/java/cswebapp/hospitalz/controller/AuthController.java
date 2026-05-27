@@ -1,19 +1,19 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
-import cswebapp.hospitalz.model.Doctor;
-import cswebapp.hospitalz.model.Patient;
-import cswebapp.hospitalz.model.User;
-import cswebapp.hospitalz.model.UserRole;
+import cswebapp.hospitalz.model.*;
 import cswebapp.hospitalz.repository.DoctorRepository;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder; // Thêm import này
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -64,6 +64,7 @@ public class AuthController {
         return ResponseEntity.status(401).body("Invalid username or password");
     }
     @PostMapping("/register")
+    @Transactional
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         // 1. Backend Regex Validation cho Username
         if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
@@ -77,9 +78,44 @@ public class AuthController {
                 "Invalid Password! Must be at least 8 characters, include 1 uppercase, 1 lowercase, and 1 number."));
         }
 
+        // 3. Validate Patient Info fields
+        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Full name is required."));
+        }
+        if (request.getDateOfBirth() == null || request.getDateOfBirth().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Date of birth is required."));
+        }
+        if (request.getGender() == null || request.getGender().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Gender is required."));
+        }
+        if (request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Phone number is required."));
+        }
+
+        // Check if gender is valid
+        Gender genderEnum;
+        try {
+            genderEnum = Gender.valueOf(request.getGender().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid Gender value."));
+        }
+
+        // Parse date of birth
+        LocalDate dob;
+        try {
+            dob = LocalDate.parse(request.getDateOfBirth());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid Date of Birth format (should be YYYY-MM-DD)."));
+        }
+
         // Kiểm tra xem username đã tồn tại chưa
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Username is already taken!"));
+        }
+
+        // Kiểm tra xem phoneNumber đã tồn tại chưa
+        if (patientRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Phone number is already registered by another patient!"));
         }
 
         User newUser = new User();
@@ -87,20 +123,46 @@ public class AuthController {
         // Mã hóa mật khẩu trước khi lưu vào DB
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         
-        // Thiết lập Role. Mặc định tài khoản đăng ký tự do trên web là PATIENT
-        if (request.getRole() != null && !request.getRole().isEmpty()) {
-            try {
-                newUser.setRole(UserRole.valueOf(request.getRole().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                newUser.setRole(UserRole.PATIENT);
-            }
-        } else {
-            newUser.setRole(UserRole.PATIENT);
-        }
-        
+        // Mặc định tài khoản đăng ký tự do trên web là PATIENT
+        newUser.setRole(UserRole.PATIENT);
         newUser.setActive(true);
-        userRepository.save(newUser);
+        User savedUser = userRepository.save(newUser);
 
-        return ResponseEntity.ok(Map.of("message", "User registered successfully!"));
+        // Sinh PatientID
+        int currentYear = LocalDate.now().getYear();
+        String patientId = generateNextPatientId(currentYear);
+
+        Patient newPatient = new Patient();
+        newPatient.setPatientId(patientId);
+        newPatient.setFullName(request.getFullName());
+        newPatient.setDateOfBirth(dob);
+        newPatient.setGender(genderEnum);
+        newPatient.setPhoneNumber(request.getPhoneNumber());
+        newPatient.setEmail(request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail() : null);
+        newPatient.setStatus(PatientStatus.OUTPATIENT);
+        newPatient.setUser(savedUser);
+
+        patientRepository.save(newPatient);
+
+        return ResponseEntity.ok(Map.of(
+            "message", "User registered successfully!",
+            "patientId", patientId
+        ));
+    }
+
+    private synchronized String generateNextPatientId(int year) {
+        String prefix = "PAT-" + year + "-";
+        Optional<String> lastIdOpt = patientRepository.findLastPatientIdByPrefix(prefix + "%");
+        int nextNumber = 1;
+        if (lastIdOpt.isPresent()) {
+            String lastId = lastIdOpt.get();
+            try {
+                String numberPart = lastId.substring(prefix.length());
+                nextNumber = Integer.parseInt(numberPart) + 1;
+            } catch (Exception e) {
+                nextNumber = 1;
+            }
+        }
+        return prefix + String.format("%05d", nextNumber);
     }
 }
