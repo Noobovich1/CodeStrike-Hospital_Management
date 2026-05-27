@@ -21,6 +21,7 @@ public class Staff {
     private String fullName;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.ORDINAL)
     private StaffRole role;
 
     @Column(name = "phone_number", nullable = false, length = 15)
@@ -31,6 +32,7 @@ public class Staff {
     private String assignedWard;
 
     @Column(name = "shift")
+    @Enumerated(EnumType.ORDINAL)
     private Shift shift;
 
     @Column(name = "is_active")

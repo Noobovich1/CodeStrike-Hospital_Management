@@ -310,7 +310,7 @@ export async function renderDoctorPatientList() {
 
   setTimeout(async () => {
     const tbody = container.querySelector("#doc-patient-list");
-    const doctorId = localStorage.getItem("doctorId");
+    const doctorId = localStorage.getItem("doctorId") || sessionStorage.getItem("doctorId");
 
     if (!doctorId) {
       tbody.innerHTML =

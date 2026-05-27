@@ -22,6 +22,7 @@ public class Room {
     private String roomNumber;
 
     @Column(name = "room_type", nullable = false)
+    @Enumerated(EnumType.ORDINAL)
     private RoomType roomType;
 
     @Column(name = "floor")
@@ -39,6 +40,7 @@ public class Room {
     private Double dailyRate;
 
     @Column(name = "status")
+    @Enumerated(EnumType.ORDINAL)
     private RoomStatus status = RoomStatus.AVAILABLE;
 
     @Column(columnDefinition = "TEXT")

@@ -24,6 +24,9 @@ public class BillService {
     @Autowired
     private DoctorPatientRepository doctorPatientRepository;
 
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
     // ── GENERATE BILL ──────────────────────────────────────────────────────
     @Transactional
     public Bill generateBill(Long admissionId) {
@@ -59,15 +62,22 @@ public class BillService {
                 .mapToDouble(dp -> dp.getDoctor().getConsultationFee())
                 .sum();
 
+        // 6.5 Calculate outpatient appointment charges
+        List<Appointment> completedAppointments = appointmentRepository
+                .findByPatient_PatientIdAndStatusAndIsBilled(patientId, AppointmentStatus.COMPLETED, false);
+        double outpatientCharges = completedAppointments.stream()
+                .mapToDouble(app -> app.getDoctor().getConsultationFee())
+                .sum();
+
         // 7. Calculate total:
-        // subtotal = room + treatment + doctor + other
+        // subtotal = room + treatment + doctor + outpatient + other
         // discountedSubtotal = subtotal - (subtotal * discount / 100)
         // total = discountedSubtotal + (discountedSubtotal * tax / 100)
         double otherCharges = 0.0;
         double discount = 0.0;
         double taxPercent = 10.0;
 
-        double subtotal = roomCharges + treatmentCharges + doctorCharges + otherCharges;
+        double subtotal = roomCharges + treatmentCharges + doctorCharges + outpatientCharges + otherCharges;
         double afterDiscount = subtotal - (subtotal * discount / 100);
         double totalAmount = afterDiscount + (afterDiscount * taxPercent / 100);
 
@@ -78,6 +88,7 @@ public class BillService {
         bill.setRoomCharges(roomCharges);
         bill.setTreatmentCharges(treatmentCharges);
         bill.setDoctorCharges(doctorCharges);
+        bill.setOutpatientCharges(outpatientCharges);
         bill.setOtherCharges(otherCharges);
         bill.setDiscount(discount);
         bill.setTaxPercent(taxPercent);
@@ -85,6 +96,10 @@ public class BillService {
         bill.setPaymentStatus(PaymentStatus.PENDING);
         bill.setPaidAmount(0.0);
         bill.setGeneratedAt(LocalDateTime.now());
+
+        // Mark completed appointments as billed
+        completedAppointments.forEach(app -> app.setIsBilled(true));
+        appointmentRepository.saveAll(completedAppointments);
 
         return billRepository.save(bill);
     }
@@ -135,7 +150,7 @@ public class BillService {
 
         // Recalculate total with new discount
         double subtotal = bill.getRoomCharges() + bill.getTreatmentCharges()
-                + bill.getDoctorCharges() + bill.getOtherCharges();
+                + bill.getDoctorCharges() + bill.getOutpatientCharges() + bill.getOtherCharges();
         double afterDiscount = subtotal - (subtotal * discountPercent / 100);
         double newTotal = afterDiscount + (afterDiscount * bill.getTaxPercent() / 100);
 
