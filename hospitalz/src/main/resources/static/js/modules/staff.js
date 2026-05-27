@@ -163,8 +163,8 @@ export async function renderStaffList() {
     `;
 
     setTimeout(() => {
-        loadStaffData();
-        loadDoctorData();
+        loadStaffData(container);
+        loadDoctorData(container);
         setupEvents(container);
     }, 0);
 
@@ -449,9 +449,3 @@ function setupEvents(container) {
         }
     };
 }
-
-setTimeout(() => {
-    loadStaffData(container);    // ← pass container
-    loadDoctorData(container);   // ← pass container
-    setupEvents(container);
-}, 0);

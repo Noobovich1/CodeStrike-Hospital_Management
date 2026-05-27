@@ -26,6 +26,7 @@ public class Patient {
     private LocalDate dateOfBirth;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.ORDINAL)
     private Gender gender;
 
     @Column(name = "blood_group", length = 5)
@@ -53,6 +54,7 @@ public class Patient {
     private String currentTreatmentNotes;
 
     @Column(name = "status")
+    @Enumerated(EnumType.ORDINAL)
     private PatientStatus status = PatientStatus.OUTPATIENT;
 
     @OneToOne(fetch = FetchType.LAZY)

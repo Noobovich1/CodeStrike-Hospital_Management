@@ -42,6 +42,7 @@ public class Admission {
     private Integer totalDays;
 
     @Column(name = "status")
+    @Enumerated(EnumType.ORDINAL)
     private AdmissionStatus status = AdmissionStatus.ACTIVE;
 
     @Column(columnDefinition = "TEXT")

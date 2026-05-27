@@ -62,6 +62,7 @@ public class Bill {
     private Double totalAmount;
 
     @Column(name = "payment_status")
+    @Enumerated(EnumType.ORDINAL)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Column(name = "paid_amount")
