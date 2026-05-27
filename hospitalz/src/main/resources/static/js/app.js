@@ -1,4 +1,5 @@
 // app.js - Main Application Logic
+import { initSettingsModal } from './modules/settings.js';
 
 const sidebarNav = document.getElementById('sidebar-nav');
 const roleSelect = document.getElementById('role-select');
@@ -267,6 +268,7 @@ function init() {
     
     initTheme();
     initResponsiveUI();
+    initSettingsModal();
     
     // Setup Role Switcher
     if (roleSelect) {
