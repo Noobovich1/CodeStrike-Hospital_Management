@@ -121,4 +121,13 @@ public class PatientController {
         Patient savedPatient = patientRepository.save(patient);
         return ResponseEntity.ok(savedPatient);
     }
+
+    @PatchMapping("/{id}/clinical")
+    public ResponseEntity<Patient> updateClinicalDetails(
+            @PathVariable String id,
+            @RequestBody Map<String, String> payload) {
+        String diseaseDesc = payload.get("diseaseDescription");
+        String treatmentNotes = payload.get("currentTreatmentNotes");
+        return ResponseEntity.ok(patientService.updateClinicalDetails(id, diseaseDesc, treatmentNotes));
+    }
 }

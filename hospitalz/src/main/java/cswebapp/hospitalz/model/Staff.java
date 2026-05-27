@@ -40,4 +40,8 @@ public class Staff {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
 }

@@ -4,11 +4,13 @@ export async function renderBilling() {
     const container = document.createElement('div');
     const role = localStorage.getItem('role') || sessionStorage.getItem('role') || '';
     const isAdmin = role === 'ADMIN';
+    const isPatient = role === 'PATIENT';
     
     container.innerHTML = `
         <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
-                <h2 style="margin: 0;">Billing & Payments</h2>
+                <h2 style="margin: 0;">${isPatient ? 'My Bills' : 'Billing & Payments'}</h2>
+                ${!isPatient ? `
                 <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                     <div style="display: flex; gap: 6px; align-items: center; border: 1px solid var(--border-color); padding: 4px; border-radius: 6px; background: var(--bg-secondary);">
                         <select id="bill-search-type" style="padding: 6px; border: none; background: transparent; outline: none; color: var(--text-primary);">
@@ -23,6 +25,7 @@ export async function renderBilling() {
                         <i class="fa-solid fa-file-invoice"></i> Generate Bill
                     </button>
                 </div>
+                ` : ''}
             </div>
 
             <!-- Bills Table -->
@@ -138,11 +141,19 @@ export async function renderBilling() {
 async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = '') {
     const tbody = container.querySelector('#bills-table-body');
     const isPatient = (localStorage.getItem('role') || sessionStorage.getItem('role')) === 'PATIENT';
+    const patientId = localStorage.getItem('patientId');
 
     try {
         let bills = [];
         
-        if (searchType === 'PATIENT' && searchId.trim() !== '') {
+        if (isPatient) {
+            if (patientId) {
+                bills = await api.get(`/bills/patient/${patientId}`);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--status-danger);">Error: Patient ID not found.</td></tr>`;
+                return;
+            }
+        } else if (searchType === 'PATIENT' && searchId.trim() !== '') {
             bills = await api.get(`/bills/patient/${searchId}`);
         } else if (searchType === 'ADMISSION' && searchId.trim() !== '') {
             const bill = await api.get(`/bills/admission/${searchId}`);
@@ -279,6 +290,14 @@ async function showBillDetails(billId, container) {
 }
 
 function setupBillingEvents(container, isAdmin) {
+    const isPatient = (localStorage.getItem('role') || sessionStorage.getItem('role')) === 'PATIENT';
+    if (isPatient) {
+        container.querySelector('#close-bill-modal').onclick = () => {
+            container.querySelector('#bill-modal').style.display = 'none';
+        };
+        return;
+    }
+
     const btnGen = container.querySelector('#btn-generate-bill');
     const modalGen = container.querySelector('#gen-bill-modal');
     const closeGen = container.querySelector('#close-gen-bill-modal');

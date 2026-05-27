@@ -15,4 +15,6 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
     List<Staff> findByAssignedWardIgnoreCase(String assignedWard);
 
     List<Staff> findByIsActiveTrue();
+
+    java.util.Optional<Staff> findByUser_Id(Long userId);
 }

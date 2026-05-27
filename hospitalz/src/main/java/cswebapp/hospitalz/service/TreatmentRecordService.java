@@ -65,4 +65,11 @@ public class TreatmentRecordService {
     public Double getTotalTreatmentCostForPatient(String patientId) {
         return treatmentRecordRepository.sumTreatmentCostByPatient(patientId);
     }
+
+    public TreatmentRecord updateNotes(Long id, String notes) {
+        TreatmentRecord record = treatmentRecordRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Record not found: " + id));
+        record.setNotes(notes);
+        return treatmentRecordRepository.save(record);
+    }
 }

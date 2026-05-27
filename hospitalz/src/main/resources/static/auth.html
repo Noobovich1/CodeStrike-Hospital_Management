@@ -386,10 +386,14 @@
               localStorage.removeItem("role");
               localStorage.removeItem("username");
               localStorage.removeItem("doctorId");
+              localStorage.removeItem("staffId");
+              localStorage.removeItem("assignedWard");
               sessionStorage.removeItem("token");
               sessionStorage.removeItem("role");
               sessionStorage.removeItem("username");
               sessionStorage.removeItem("doctorId");
+              sessionStorage.removeItem("staffId");
+              sessionStorage.removeItem("assignedWard");
 
               // Save to selected storage
               storage.setItem("token", data.token);
@@ -397,6 +401,12 @@
               storage.setItem("username", data.username);
               if (data.doctorId) {
                 storage.setItem("doctorId", data.doctorId);
+              }
+              if (data.staffId) {
+                storage.setItem("staffId", data.staffId);
+              }
+              if (data.assignedWard) {
+                storage.setItem("assignedWard", data.assignedWard);
               }
               if (data.patientId) {
                 localStorage.setItem("patientId", data.patientId);
