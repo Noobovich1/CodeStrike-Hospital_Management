@@ -277,6 +277,7 @@ async function openEditTreatmentForm(treatmentId) {
 }
 
 function setupTreatmentsEvents(container) {
+  const currentDoctorId = localStorage.getItem('doctorId') || sessionStorage.getItem('doctorId') || '';
   const btnPresc = container.querySelector("#btn-tab-prescribe");
   const btnMaster = container.querySelector("#btn-tab-master");
   const btnPrescribeAction = container.querySelector("#btn-prescribe-action");

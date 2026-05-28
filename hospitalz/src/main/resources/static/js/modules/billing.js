@@ -190,6 +190,11 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
             const paid = b.paidAmount || 0;
             const total = b.totalAmount || 0;
             const balance = total - paid;
+            let statusBadgeColor = 'var(--text-secondary)';
+            if (b.paymentStatus === 'PENDING') statusBadgeColor = 'var(--status-warning)';
+            if (b.paymentStatus === 'PARTIAL') statusBadgeColor = 'var(--accent-primary)';
+            if (b.paymentStatus === 'PAID') statusBadgeColor = 'var(--status-success)';
+
             return `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px;">${b.billId}</td>
@@ -197,7 +202,11 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
                 <td style="padding: 12px;">$${total.toFixed(2)}</td>
                 <td style="padding: 12px; color: var(--status-success);">$${paid.toFixed(2)}</td>
                 <td style="padding: 12px; color: var(--status-danger); font-weight: bold;">$${balance.toFixed(2)}</td>
-                <td style="padding: 12px;">${b.paymentStatus}</td>
+                <td style="padding: 12px;">
+                    <span style="color: ${statusBadgeColor}; font-weight: 600; text-transform: uppercase;">
+                        ${b.paymentStatus}
+                    </span>
+                </td>
                 <td style="padding: 12px;">
                     <div class="action-group">
                         <button class="btn-icon btn-icon-view btn-view-bill" data-id="${b.billId}" title="View Details">
@@ -251,7 +260,12 @@ async function showBillDetails(billId, container) {
         const total = bill.totalAmount || 0;
         const balance = total - paid;
         
-        content.innerHTML = `
+            let statusBadgeColor = 'var(--text-secondary)';
+            if (bill.paymentStatus === 'PENDING') statusBadgeColor = 'var(--status-warning)';
+            if (bill.paymentStatus === 'PARTIAL') statusBadgeColor = 'var(--accent-primary)';
+            if (bill.paymentStatus === 'PAID') statusBadgeColor = 'var(--status-success)';
+
+            content.innerHTML = `
             <div style="margin-bottom: 16px;">
                 <p><strong>Patient:</strong> ${bill.patient?.fullName || bill.patient?.patientId}</p>
                 <p><strong>Encounter:</strong> ${bill.admission ? `Admission ID #${bill.admission.admissionId}` : (bill.appointment ? `Appointment ID #${bill.appointment.id}` : '-')}</p>
@@ -293,7 +307,7 @@ async function showBillDetails(billId, container) {
                     <td style="padding: 8px 0; text-align: right; color: var(--status-danger);">$${balance.toFixed(2)}</td>
                 </tr>
             </table>
-            <p><strong>Status:</strong> ${bill.paymentStatus}</p>
+            <p><strong>Status:</strong> <span style="color: ${statusBadgeColor}; font-weight: 600; text-transform: uppercase;">${bill.paymentStatus}</span></p>
         `;
         
         container.querySelector('#btn-download-pdf').onclick = async () => {

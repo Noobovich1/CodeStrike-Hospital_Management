@@ -141,7 +141,7 @@ function renderCharts(container, roomOccupancy, bills) {
             labels: monthLabels,
             datasets: [{
                 label: 'Revenue Trend',
-                data: monthlyRevenue,             // ← real data now
+                data: monthlyRevenue,
                 borderColor: 'rgba(16, 185, 129, 1)',
                 tension: 0.1,
                 fill: false
