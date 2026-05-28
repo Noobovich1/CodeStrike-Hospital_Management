@@ -110,6 +110,52 @@ public class BillService {
         return billRepository.save(bill);
     }
 
+    // ── GENERATE OUTPATIENT BILL ───────────────────────────────────────────
+    @Transactional
+    public Bill generateOutpatientBill(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found: " + appointmentId));
+
+        if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
+            throw new RuntimeException("Appointment must be COMPLETED before generating a bill.");
+        }
+
+        if (billRepository.findByAppointment_Id(appointmentId).isPresent()) {
+            throw new RuntimeException("Bill already exists for this appointment: " + appointmentId);
+        }
+
+        Patient patient = appointment.getPatient();
+        double roomCharges = 0.0;
+        double treatmentCharges = 0.0;
+        double doctorCharges = 0.0;
+        double outpatientCharges = appointment.getDoctor().getConsultationFee();
+
+        double discount = 0.0;
+        double taxPercent = 10.0;
+        double subtotal = outpatientCharges;
+        double afterDiscount = subtotal - (subtotal * discount / 100);
+        double totalAmount = afterDiscount + (afterDiscount * taxPercent / 100);
+
+        Bill bill = new Bill();
+        bill.setAppointment(appointment);
+        bill.setPatient(patient);
+        bill.setRoomCharges(roomCharges);
+        bill.setTreatmentCharges(treatmentCharges);
+        bill.setDoctorCharges(doctorCharges);
+        bill.setOutpatientCharges(outpatientCharges);
+        bill.setDiscount(discount);
+        bill.setTaxPercent(taxPercent);
+        bill.setTotalAmount(Math.round(totalAmount * 100.0) / 100.0);
+        bill.setPaymentStatus(PaymentStatus.PENDING);
+        bill.setPaidAmount(0.0);
+        bill.setGeneratedAt(LocalDateTime.now());
+
+        appointment.setIsBilled(true);
+        appointmentRepository.save(appointment);
+
+        return billRepository.save(bill);
+    }
+
     // ── RECORD PAYMENT ─────────────────────────────────────────────────────
     @Transactional
     public Bill recordPayment(Long billId, PaymentRequest request) {
@@ -289,11 +335,19 @@ public class BillService {
             PdfPCell stayCell = new PdfPCell();
             stayCell.setBorder(Rectangle.NO_BORDER);
             stayCell.addElement(new Paragraph("STAY / ENCOUNTER DETAILS", sectionHeaderFont));
-            stayCell.addElement(new Paragraph("Admission ID: " + admission.getAdmissionId(), boldFont));
-            stayCell.addElement(new Paragraph("Room: " + admission.getRoom().getRoomNumber() + " (" + admission.getRoom().getRoomType().name() + ")", normalFont));
-            stayCell.addElement(new Paragraph("Admitted: " + admission.getAdmissionDate().toLocalDate().toString(), normalFont));
-            stayCell.addElement(new Paragraph("Discharged: " + (admission.getDischargeDate() != null ? admission.getDischargeDate().toLocalDate().toString() : "-"), normalFont));
-            stayCell.addElement(new Paragraph("Length of Stay: " + admission.getTotalDays() + " Day(s)", normalFont));
+            if (admission != null) {
+                stayCell.addElement(new Paragraph("Admission ID: " + admission.getAdmissionId(), boldFont));
+                stayCell.addElement(new Paragraph("Room: " + admission.getRoom().getRoomNumber() + " (" + admission.getRoom().getRoomType().name() + ")", normalFont));
+                stayCell.addElement(new Paragraph("Admitted: " + admission.getAdmissionDate().toLocalDate().toString(), normalFont));
+                stayCell.addElement(new Paragraph("Discharged: " + (admission.getDischargeDate() != null ? admission.getDischargeDate().toLocalDate().toString() : "-"), normalFont));
+                stayCell.addElement(new Paragraph("Length of Stay: " + admission.getTotalDays() + " Day(s)", normalFont));
+            } else if (bill.getAppointment() != null) {
+                Appointment app = bill.getAppointment();
+                stayCell.addElement(new Paragraph("Appointment ID: " + app.getId(), boldFont));
+                stayCell.addElement(new Paragraph("Specialisation: " + app.getSpecialisation(), normalFont));
+                stayCell.addElement(new Paragraph("Date: " + app.getAppointmentDate().toLocalDate().toString(), normalFont));
+                stayCell.addElement(new Paragraph("Type: OUTPATIENT VISIT", normalFont));
+            }
             billToStayTable.addCell(stayCell);
 
             document.add(billToStayTable);
@@ -320,30 +374,52 @@ public class BillService {
             boolean alternatingRow = false;
 
             // 3.1 Room Stay Cost
-            PdfPCell descCell = new PdfPCell(new Phrase("Room Stay: Room " + admission.getRoom().getRoomNumber() + " (" + admission.getRoom().getRoomType().name() + ")", normalFont));
-            PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", admission.getRoom().getDailyRate()), normalFont));
-            PdfPCell qtyCell = new PdfPCell(new Phrase(admission.getTotalDays() + " day(s)", normalFont));
-            PdfPCell amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", bill.getRoomCharges()), normalFont));
+            if (admission != null) {
+                PdfPCell descCell = new PdfPCell(new Phrase("Room Stay: Room " + admission.getRoom().getRoomNumber() + " (" + admission.getRoom().getRoomType().name() + ")", normalFont));
+                PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", admission.getRoom().getDailyRate()), normalFont));
+                PdfPCell qtyCell = new PdfPCell(new Phrase(admission.getTotalDays() + " day(s)", normalFont));
+                PdfPCell amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", bill.getRoomCharges()), normalFont));
 
-            styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
-            itemTable.addCell(descCell);
-            itemTable.addCell(rateCell);
-            itemTable.addCell(qtyCell);
-            itemTable.addCell(amtCell);
-            alternatingRow = !alternatingRow;
+                styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
+                itemTable.addCell(descCell);
+                itemTable.addCell(rateCell);
+                itemTable.addCell(qtyCell);
+                itemTable.addCell(amtCell);
+                alternatingRow = !alternatingRow;
+            }
 
             // 3.2 Treatments and Prescriptions performed during admission
-            List<TreatmentRecord> treatmentRecords = treatmentRecordRepository.findByPatient_PatientId(patient.getPatientId());
-            LocalDateTime start = admission.getAdmissionDate();
-            LocalDateTime end = admission.getDischargeDate() != null ? admission.getDischargeDate() : LocalDateTime.now();
+            if (admission != null) {
+                List<TreatmentRecord> treatmentRecords = treatmentRecordRepository.findByPatient_PatientId(patient.getPatientId());
+                LocalDateTime start = admission.getAdmissionDate();
+                LocalDateTime end = admission.getDischargeDate() != null ? admission.getDischargeDate() : LocalDateTime.now();
 
-            for (TreatmentRecord tr : treatmentRecords) {
-                if (tr.getSessionDate().isAfter(start.minusMinutes(1)) && tr.getSessionDate().isBefore(end.plusMinutes(1))) {
-                    descCell = new PdfPCell(new Phrase(tr.getTreatment().getName() + " (Dr. " + tr.getDoctor().getFullName() + ")", normalFont));
-                    rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", tr.getUnitCostSnapshot()), normalFont));
-                    qtyCell = new PdfPCell(new Phrase(String.valueOf(tr.getQuantity()), normalFont));
-                    double amount = tr.getUnitCostSnapshot() * tr.getQuantity();
-                    amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", amount), normalFont));
+                for (TreatmentRecord tr : treatmentRecords) {
+                    if (tr.getSessionDate().isAfter(start.minusMinutes(1)) && tr.getSessionDate().isBefore(end.plusMinutes(1))) {
+                        PdfPCell descCell = new PdfPCell(new Phrase(tr.getTreatment().getName() + " (Dr. " + tr.getDoctor().getFullName() + ")", normalFont));
+                        PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", tr.getUnitCostSnapshot()), normalFont));
+                        PdfPCell qtyCell = new PdfPCell(new Phrase(String.valueOf(tr.getQuantity()), normalFont));
+                        double amount = tr.getUnitCostSnapshot() * tr.getQuantity();
+                        PdfPCell amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", amount), normalFont));
+
+                        styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
+                        itemTable.addCell(descCell);
+                        itemTable.addCell(rateCell);
+                        itemTable.addCell(qtyCell);
+                        itemTable.addCell(amtCell);
+                        alternatingRow = !alternatingRow;
+                    }
+                }
+            }
+
+            // 3.3 Attending Doctor Consultation Fees
+            if (admission != null) {
+                List<DoctorPatient> assignments = doctorPatientRepository.findByPatient_PatientId(patient.getPatientId());
+                for (DoctorPatient dp : assignments) {
+                    PdfPCell descCell = new PdfPCell(new Phrase("Inpatient Consultation: Dr. " + dp.getDoctor().getFullName() + " (" + dp.getDoctor().getSpecialisation() + ")", normalFont));
+                    PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", dp.getDoctor().getConsultationFee()), normalFont));
+                    PdfPCell qtyCell = new PdfPCell(new Phrase("1", normalFont));
+                    PdfPCell amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", dp.getDoctor().getConsultationFee()), normalFont));
 
                     styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
                     itemTable.addCell(descCell);
@@ -354,38 +430,37 @@ public class BillService {
                 }
             }
 
-            // 3.3 Attending Doctor Consultation Fees
-            List<DoctorPatient> assignments = doctorPatientRepository.findByPatient_PatientId(patient.getPatientId());
-            for (DoctorPatient dp : assignments) {
-                descCell = new PdfPCell(new Phrase("Inpatient Consultation: Dr. " + dp.getDoctor().getFullName() + " (" + dp.getDoctor().getSpecialisation() + ")", normalFont));
-                rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", dp.getDoctor().getConsultationFee()), normalFont));
-                qtyCell = new PdfPCell(new Phrase("1", normalFont));
-                amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", dp.getDoctor().getConsultationFee()), normalFont));
-
-                styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
-                itemTable.addCell(descCell);
-                itemTable.addCell(rateCell);
-                itemTable.addCell(qtyCell);
-                itemTable.addCell(amtCell);
-                alternatingRow = !alternatingRow;
-            }
-
             // 3.4 Outpatient Appts (Billed)
             if (bill.getOutpatientCharges() > 0) {
-                List<Appointment> completedAppointments = appointmentRepository.findByPatient_PatientIdAndStatus(patient.getPatientId(), AppointmentStatus.COMPLETED);
-                for (Appointment app : completedAppointments) {
-                    if (app.getIsBilled() != null && app.getIsBilled()) {
-                        descCell = new PdfPCell(new Phrase("Outpatient Visit: Dr. " + app.getDoctor().getFullName(), normalFont));
-                        rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", app.getDoctor().getConsultationFee()), normalFont));
-                        qtyCell = new PdfPCell(new Phrase("1", normalFont));
-                        amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", app.getDoctor().getConsultationFee()), normalFont));
+                if (bill.getAppointment() != null) {
+                    Appointment app = bill.getAppointment();
+                    PdfPCell descCell = new PdfPCell(new Phrase("Outpatient Visit: Dr. " + app.getDoctor().getFullName(), normalFont));
+                    PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", app.getDoctor().getConsultationFee()), normalFont));
+                    PdfPCell qtyCell = new PdfPCell(new Phrase("1", normalFont));
+                    PdfPCell amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", app.getDoctor().getConsultationFee()), normalFont));
 
-                        styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
-                        itemTable.addCell(descCell);
-                        itemTable.addCell(rateCell);
-                        itemTable.addCell(qtyCell);
-                        itemTable.addCell(amtCell);
-                        alternatingRow = !alternatingRow;
+                    styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
+                    itemTable.addCell(descCell);
+                    itemTable.addCell(rateCell);
+                    itemTable.addCell(qtyCell);
+                    itemTable.addCell(amtCell);
+                    alternatingRow = !alternatingRow;
+                } else {
+                    List<Appointment> completedAppointments = appointmentRepository.findByPatient_PatientIdAndStatus(patient.getPatientId(), AppointmentStatus.COMPLETED);
+                    for (Appointment app : completedAppointments) {
+                        if (app.getIsBilled() != null && app.getIsBilled()) {
+                            PdfPCell descCell = new PdfPCell(new Phrase("Outpatient Visit: Dr. " + app.getDoctor().getFullName(), normalFont));
+                            PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", app.getDoctor().getConsultationFee()), normalFont));
+                            PdfPCell qtyCell = new PdfPCell(new Phrase("1", normalFont));
+                            PdfPCell amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", app.getDoctor().getConsultationFee()), normalFont));
+
+                            styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
+                            itemTable.addCell(descCell);
+                            itemTable.addCell(rateCell);
+                            itemTable.addCell(qtyCell);
+                            itemTable.addCell(amtCell);
+                            alternatingRow = !alternatingRow;
+                        }
                     }
                 }
             }

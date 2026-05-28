@@ -20,9 +20,14 @@ public class Bill {
     private Long billId;
 
     @OneToOne
-    @JoinColumn(name = "admission_id", nullable = false, unique = true)
+    @JoinColumn(name = "admission_id", nullable = true, unique = true)
     @JsonIgnoreProperties({"bills", "patient", "hibernateLazyInitializer"})
     private Admission admission;
+
+    @OneToOne
+    @JoinColumn(name = "appointment_id", nullable = true, unique = true)
+    @JsonIgnoreProperties({"bills", "patient", "hibernateLazyInitializer"})
+    private Appointment appointment;
 
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
