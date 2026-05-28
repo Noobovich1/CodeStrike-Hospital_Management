@@ -20,4 +20,6 @@ public interface AdmissionRepository extends JpaRepository<Admission, Long> {
 
     // All active admissions (for dashboard)
     List<Admission> findByStatus(AdmissionStatus status);
+
+    long countByStatus(AdmissionStatus status);
 }

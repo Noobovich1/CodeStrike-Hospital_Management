@@ -1,7 +1,7 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.Admission;
-import cswebapp.hospitalz.model.AdmissionRequest;
+import cswebapp.hospitalz.dto.AdmissionRequest;
 import cswebapp.hospitalz.service.AdmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

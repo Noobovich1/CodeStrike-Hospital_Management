@@ -1,6 +1,7 @@
 package cswebapp.hospitalz.service;
 
 import cswebapp.hospitalz.model.*;
+import cswebapp.hospitalz.dto.AdmissionRequest;
 import cswebapp.hospitalz.repository.AdmissionRepository;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.RoomRepository;

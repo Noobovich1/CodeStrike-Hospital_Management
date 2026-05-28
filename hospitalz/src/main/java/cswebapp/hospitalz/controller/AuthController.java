@@ -2,6 +2,8 @@ package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
 import cswebapp.hospitalz.model.*;
+import cswebapp.hospitalz.dto.LoginRequest;
+import cswebapp.hospitalz.dto.RegisterRequest;
 import cswebapp.hospitalz.repository.DoctorRepository;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.UserRepository;
@@ -73,19 +75,21 @@ public class AuthController {
         }
         return ResponseEntity.status(401).body("Invalid username or password");
     }
+
     @PostMapping("/register")
     @Transactional
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         // 1. Backend Regex Validation cho Username
         if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
-            return ResponseEntity.badRequest().body(Map.of("error", 
-                "Invalid Username! Must be 3-20 characters, using only letters, numbers, and underscores."));
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Invalid Username! Must be 3-20 characters, using only letters, numbers, and underscores."));
         }
 
         // 2. Backend Regex Validation cho Password
-        if (request.getPassword() == null || !request.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d\\W]{8,}$")) {
-            return ResponseEntity.badRequest().body(Map.of("error", 
-                "Invalid Password! Must be at least 8 characters, include 1 uppercase, 1 lowercase, and 1 number."));
+        if (request.getPassword() == null
+                || !request.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d\\W]{8,}$")) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Invalid Password! Must be at least 8 characters, include 1 uppercase, 1 lowercase, and 1 number."));
         }
 
         // 3. Validate Patient Info fields
@@ -115,7 +119,8 @@ public class AuthController {
         try {
             dob = LocalDate.parse(request.getDateOfBirth());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid Date of Birth format (should be YYYY-MM-DD)."));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid Date of Birth format (should be YYYY-MM-DD)."));
         }
 
         // Kiểm tra xem username đã tồn tại chưa
@@ -125,14 +130,15 @@ public class AuthController {
 
         // Kiểm tra xem phoneNumber đã tồn tại chưa
         if (patientRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Phone number is already registered by another patient!"));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Phone number is already registered by another patient!"));
         }
 
         User newUser = new User();
         newUser.setUsername(request.getUsername());
         // Mã hóa mật khẩu trước khi lưu vào DB
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
-        
+
         // Mặc định tài khoản đăng ký tự do trên web là PATIENT
         newUser.setRole(UserRole.PATIENT);
         newUser.setActive(true);
@@ -148,16 +154,16 @@ public class AuthController {
         newPatient.setDateOfBirth(dob);
         newPatient.setGender(genderEnum);
         newPatient.setPhoneNumber(request.getPhoneNumber());
-        newPatient.setEmail(request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail() : null);
+        newPatient.setEmail(
+                request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail() : null);
         newPatient.setStatus(PatientStatus.OUTPATIENT);
         newPatient.setUser(savedUser);
 
         patientRepository.save(newPatient);
 
         return ResponseEntity.ok(Map.of(
-            "message", "User registered successfully!",
-            "patientId", patientId
-        ));
+                "message", "User registered successfully!",
+                "patientId", patientId));
     }
 
     private synchronized String generateNextPatientId(int year) {

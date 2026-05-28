@@ -1,6 +1,7 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
+import cswebapp.hospitalz.dto.RoleUpdateRequest;
 import cswebapp.hospitalz.model.User;
 import cswebapp.hospitalz.model.UserRole;
 import cswebapp.hospitalz.repository.UserRepository;
@@ -54,7 +55,7 @@ public class UserController {
     public ResponseEntity<?> changePassword(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody ChangePasswordRequest request) {
-        
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No token provided"));
         }
@@ -83,8 +84,8 @@ public class UserController {
 
         // Validate mật khẩu mới theo regex
         if (!request.getNewPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d\\W]{8,}$")) {
-            return ResponseEntity.badRequest().body(Map.of("error", 
-                "Password must be at least 8 characters, and include at least one uppercase letter, one lowercase letter, and one number."));
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Password must be at least 8 characters, and include at least one uppercase letter, one lowercase letter, and one number."));
         }
 
         // Lưu mật khẩu đã mã hóa mới

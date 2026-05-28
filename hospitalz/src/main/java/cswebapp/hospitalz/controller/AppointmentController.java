@@ -1,7 +1,7 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.Appointment;
-import cswebapp.hospitalz.model.AppointmentRequest;
+import cswebapp.hospitalz.dto.AppointmentRequest;
 import cswebapp.hospitalz.model.AppointmentStatus;
 import cswebapp.hospitalz.service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;

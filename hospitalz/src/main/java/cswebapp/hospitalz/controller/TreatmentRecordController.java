@@ -39,7 +39,7 @@ public class TreatmentRecordController {
 
     // Get total treatment cost for a patient — used internally by BillService
     @GetMapping("/patient/{patientId}/total-cost")
-    public ResponseEntity<Double> getTotalCost(@PathVariable String patientId) {
+    public ResponseEntity<java.math.BigDecimal> getTotalCost(@PathVariable String patientId) {
         return ResponseEntity.ok(treatmentRecordService.getTotalTreatmentCostForPatient(patientId));
     }
 

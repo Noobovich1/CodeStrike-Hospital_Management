@@ -1,4 +1,4 @@
-package cswebapp.hospitalz.controller;
+package cswebapp.hospitalz.dto;
 
 import lombok.Data;
 
@@ -6,7 +6,7 @@ import lombok.Data;
 public class PatientProfileUpdateRequest {
     private String fullName;
     private String dateOfBirth; // YYYY-MM-DD
-    private String gender;      // MALE, FEMALE, OTHER
+    private String gender; // MALE, FEMALE, OTHER
     private String phoneNumber;
     private String email;
     private String address;

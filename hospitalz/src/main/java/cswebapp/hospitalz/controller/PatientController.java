@@ -1,6 +1,7 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
+import cswebapp.hospitalz.dto.PatientProfileUpdateRequest;
 import cswebapp.hospitalz.model.Patient;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.UserRepository;
@@ -48,7 +49,7 @@ public class PatientController {
     public ResponseEntity<?> updateCurrentPatientProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody PatientProfileUpdateRequest request) {
-        
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No token provided"));
         }
@@ -98,13 +99,16 @@ public class PatientController {
         try {
             dob = java.time.LocalDate.parse(request.getDateOfBirth());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid Date of Birth format (should be YYYY-MM-DD)"));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid Date of Birth format (should be YYYY-MM-DD)"));
         }
 
         // Kiểm tra trùng số điện thoại với người khác
         if (!request.getPhoneNumber().equals(patient.getPhoneNumber())) {
-            if (patientRepository.existsByPhoneNumberAndPatientIdNot(request.getPhoneNumber(), patient.getPatientId())) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Phone number is already registered by another patient"));
+            if (patientRepository.existsByPhoneNumberAndPatientIdNot(request.getPhoneNumber(),
+                    patient.getPatientId())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Phone number is already registered by another patient"));
             }
         }
 
@@ -113,10 +117,19 @@ public class PatientController {
         patient.setDateOfBirth(dob);
         patient.setGender(genderEnum);
         patient.setPhoneNumber(request.getPhoneNumber().trim());
-        patient.setEmail(request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail().trim() : null);
-        patient.setAddress(request.getAddress() != null && !request.getAddress().trim().isEmpty() ? request.getAddress().trim() : null);
-        patient.setEmergencyContactName(request.getEmergencyContactName() != null && !request.getEmergencyContactName().trim().isEmpty() ? request.getEmergencyContactName().trim() : null);
-        patient.setEmergencyContactPhone(request.getEmergencyContactPhone() != null && !request.getEmergencyContactPhone().trim().isEmpty() ? request.getEmergencyContactPhone().trim() : null);
+        patient.setEmail(
+                request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail().trim() : null);
+        patient.setAddress(
+                request.getAddress() != null && !request.getAddress().trim().isEmpty() ? request.getAddress().trim()
+                        : null);
+        patient.setEmergencyContactName(
+                request.getEmergencyContactName() != null && !request.getEmergencyContactName().trim().isEmpty()
+                        ? request.getEmergencyContactName().trim()
+                        : null);
+        patient.setEmergencyContactPhone(
+                request.getEmergencyContactPhone() != null && !request.getEmergencyContactPhone().trim().isEmpty()
+                        ? request.getEmergencyContactPhone().trim()
+                        : null);
 
         Patient savedPatient = patientRepository.save(patient);
         return ResponseEntity.ok(savedPatient);

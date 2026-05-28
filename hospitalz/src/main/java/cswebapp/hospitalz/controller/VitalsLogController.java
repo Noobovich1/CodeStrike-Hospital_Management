@@ -1,11 +1,10 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.VitalsLog;
-import cswebapp.hospitalz.repository.VitalsLogRepository;
+import cswebapp.hospitalz.service.VitalsLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -13,26 +12,27 @@ import java.util.List;
 public class VitalsLogController {
 
     @Autowired
-    private VitalsLogRepository vitalsLogRepository;
+    private VitalsLogService vitalsLogService;
 
     @PostMapping
-    public ResponseEntity<VitalsLog> recordVitals(@RequestBody VitalsLog vitalsLog) {
-        if (vitalsLog.getRecordedAt() == null) {
-            vitalsLog.setRecordedAt(LocalDateTime.now());
+    public ResponseEntity<?> recordVitals(@RequestBody VitalsLog vitalsLog) {
+        try {
+            VitalsLog saved = vitalsLogService.recordVitals(vitalsLog);
+            return ResponseEntity.ok(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
         }
-        VitalsLog saved = vitalsLogRepository.save(vitalsLog);
-        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<VitalsLog>> getVitalsByPatient(@PathVariable String patientId) {
-        List<VitalsLog> list = vitalsLogRepository.findByPatientIdOrderByRecordedAtDesc(patientId);
+        List<VitalsLog> list = vitalsLogService.getVitalsByPatient(patientId);
         return ResponseEntity.ok(list);
     }
 
     @GetMapping
     public ResponseEntity<List<VitalsLog>> getAllVitals() {
-        List<VitalsLog> list = vitalsLogRepository.findAllByOrderByRecordedAtDesc();
+        List<VitalsLog> list = vitalsLogService.getAllVitals();
         return ResponseEntity.ok(list);
     }
 }

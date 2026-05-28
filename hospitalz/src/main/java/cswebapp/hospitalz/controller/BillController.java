@@ -1,7 +1,7 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.Bill;
-import cswebapp.hospitalz.model.PaymentRequest;
+import cswebapp.hospitalz.dto.PaymentRequest;
 import cswebapp.hospitalz.service.BillService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -19,7 +19,7 @@ public class BillController {
     private BillService billService;
 
     // Generate bill after discharge
-    // POST /api/v1/bills/generate/1  (1 = admissionId)
+    // POST /api/v1/bills/generate/1 (1 = admissionId)
     @PostMapping("/generate/{admissionId}")
     public ResponseEntity<Bill> generateBill(@PathVariable Long admissionId) {
         return ResponseEntity.ok(billService.generateBill(admissionId));
@@ -45,7 +45,7 @@ public class BillController {
     @PatchMapping("/{billId}/discount")
     public ResponseEntity<Bill> applyDiscount(
             @PathVariable Long billId,
-            @RequestParam Double percent) {
+            @RequestParam java.math.BigDecimal percent) {
         return ResponseEntity.ok(billService.applyDiscount(billId, percent));
     }
 
@@ -69,15 +69,16 @@ public class BillController {
     public ResponseEntity<List<Bill>> getAllBills() {
         return ResponseEntity.ok(billService.getAllBills());
     }
-     @GetMapping("/{billId}/pdf")
+
+    @GetMapping("/{billId}/pdf")
     public ResponseEntity<byte[]> downloadBillPdf(@PathVariable Long billId) {
         byte[] pdfBytes = billService.generateBillPdf(billId);
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", "Bill_" + billId + ".pdf");
         headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        
+
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(pdfBytes);

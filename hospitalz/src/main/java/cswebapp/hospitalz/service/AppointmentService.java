@@ -1,6 +1,7 @@
 package cswebapp.hospitalz.service;
 
 import cswebapp.hospitalz.model.*;
+import cswebapp.hospitalz.dto.AppointmentRequest;
 import cswebapp.hospitalz.repository.AppointmentRepository;
 import cswebapp.hospitalz.repository.DoctorRepository;
 import cswebapp.hospitalz.repository.PatientRepository;
@@ -59,7 +60,7 @@ public class AppointmentService {
                 .orElseThrow(() -> new RuntimeException("Doctor not found: " + doctorId));
 
         if (!doctor.getSpecialisation().equalsIgnoreCase(appointment.getSpecialisation())) {
-            throw new RuntimeException("Doctor specialisation (" + doctor.getSpecialisation() 
+            throw new RuntimeException("Doctor specialisation (" + doctor.getSpecialisation()
                     + ") does not match appointment specialisation (" + appointment.getSpecialisation() + ").");
         }
 
@@ -70,7 +71,8 @@ public class AppointmentService {
                 doctorId, AppointmentStatus.CANCELLED, start, end);
 
         if (isBusy) {
-            throw new RuntimeException("Doctor " + doctor.getFullName() + " already has an appointment around this time.");
+            throw new RuntimeException(
+                    "Doctor " + doctor.getFullName() + " already has an appointment around this time.");
         }
 
         appointment.setDoctor(doctor);

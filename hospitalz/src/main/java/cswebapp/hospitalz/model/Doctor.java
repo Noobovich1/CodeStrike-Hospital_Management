@@ -39,7 +39,7 @@ public class Doctor {
     private Integer experienceYears;
 
     @Column(name = "consultation_fee", nullable = false)
-    private Double consultationFee;
+    private java.math.BigDecimal consultationFee;
 
     @Column(name = "is_active")
     private Boolean isActive = true;

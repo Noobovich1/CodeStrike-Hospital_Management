@@ -62,7 +62,7 @@ public class TreatmentRecordService {
         return treatmentRecordRepository.findByDoctor_DoctorId(doctorId);
     }
 
-    public Double getTotalTreatmentCostForPatient(String patientId) {
+    public java.math.BigDecimal getTotalTreatmentCostForPatient(String patientId) {
         return treatmentRecordRepository.sumTreatmentCostByPatient(patientId);
     }
 
