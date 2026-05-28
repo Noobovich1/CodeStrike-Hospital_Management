@@ -25,6 +25,12 @@ public class BillController {
         return ResponseEntity.ok(billService.generateBill(admissionId));
     }
 
+    // Generate outpatient bill for completed appointment
+    @PostMapping("/generate/outpatient/{appointmentId}")
+    public ResponseEntity<Bill> generateOutpatientBill(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(billService.generateOutpatientBill(appointmentId));
+    }
+
     // Record a payment (partial or full)
     // Body: { "amount": 100.00 }
     @PostMapping("/{billId}/pay")

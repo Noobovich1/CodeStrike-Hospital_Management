@@ -226,7 +226,7 @@ async function loadAllPatientData(patientId, container) {
         const treatmentName = r.treatment ? r.treatment.name : "Medical Service";
         const doctorName = r.doctor ? r.doctor.fullName : "-";
         const quantity = r.quantity || 1;
-        const price = r.treatment ? r.treatment.cost : 0;
+        const price = r.unitCostSnapshot !== undefined ? r.unitCostSnapshot : (r.treatment ? r.treatment.unitCost : 0);
         const total = quantity * price;
 
         return `

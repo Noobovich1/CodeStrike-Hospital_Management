@@ -94,9 +94,13 @@ export async function renderActiveAdmissions() {
                     <form id="admit-form">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                             <div>
-                                <label style="display: block; margin-bottom: 4px;">Patient ID *</label>
-                                <input type="text" id="admit-patient-id" required placeholder="e.g. PAT-2026-00001"
-                                    style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                                <label style="display: block; margin-bottom: 4px;">Search Patient *</label>
+                                <input type="text" id="admit-patient-search" placeholder="Type name, ID or phone..." required
+                                    style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 4px; outline: none;">
+                                <select id="admit-patient-id" size="4"
+                                    style="width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); display: none; outline: none;">
+                                </select>
+                                <small id="admit-patient-hint" style="color: var(--text-secondary); font-size: 0.8em;">Type at least 2 characters to search</small>
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 4px;">Select Room *</label>
@@ -544,14 +548,84 @@ function setupAdmissionsEvents(container, isNurse, assignedWard) {
         loadHistoryAdmissions(container);
     });
 
-    btnAdmit.onclick = () => {
+    btnAdmit.onclick = async () => {
         modalAdmit.style.display = 'flex';
         loadAvailableRooms(container);
+
+        // Preload patients for admit form autocomplete
+        try {
+            allPatients = await api.get('/patients');
+        } catch (e) {
+            console.error('Failed to preload patients for admit form', e);
+        }
+
+        const searchInput = container.querySelector('#admit-patient-search');
+        const patientSelect = container.querySelector('#admit-patient-id');
+        const hint = container.querySelector('#admit-patient-hint');
+
+        patientSelect.style.display = 'none';
+        patientSelect.removeAttribute('required');
+        searchInput.value = '';
+        hint.textContent = 'Type at least 2 characters to search';
+
+        searchInput.oninput = () => {
+            const query = searchInput.value.toLowerCase().trim();
+
+            if (query.length < 2) {
+                patientSelect.style.display = 'none';
+                hint.textContent = 'Type at least 2 characters to search';
+                return;
+            }
+
+            // Exclude already admitted patients
+            const matches = allPatients.filter(p =>
+                p.status?.toUpperCase() !== 'ADMITTED' &&
+                (
+                    p.fullName?.toLowerCase().includes(query) ||
+                    p.patientId?.toLowerCase().includes(query) ||
+                    p.phoneNumber?.includes(query)
+                )
+            );
+
+            if (matches.length === 0) {
+                patientSelect.style.display = 'none';
+                hint.textContent = `No patients matching "${searchInput.value}"`;
+                return;
+            }
+
+            patientSelect.innerHTML = matches.map(p =>
+                `<option value="${p.patientId}">${p.fullName} (${p.patientId})</option>`
+            ).join('');
+            patientSelect.style.display = 'block';
+            hint.textContent = `Found ${matches.length} results — click to select`;
+
+            if (matches.length === 1) {
+                patientSelect.selectedIndex = 0;
+                hint.textContent = `✓ Selected: ${matches[0].fullName} (${matches[0].patientId})`;
+            }
+        };
+
+        patientSelect.onchange = () => {
+            const selected = patientSelect.options[patientSelect.selectedIndex];
+            if (selected && selected.value) {
+                hint.textContent = `✓ Selected: ${selected.text}`;
+                searchInput.value = selected.text;
+            }
+        };
     };
 
     const closeAdmit = () => {
         modalAdmit.style.display = 'none';
         container.querySelector('#admit-form').reset();
+        const searchInput = container.querySelector('#admit-patient-search');
+        const patientSelect = container.querySelector('#admit-patient-id');
+        const hint = container.querySelector('#admit-patient-hint');
+        if (searchInput) searchInput.value = '';
+        if (patientSelect) {
+            patientSelect.style.display = 'none';
+            patientSelect.innerHTML = '';
+        }
+        if (hint) hint.textContent = 'Type at least 2 characters to search';
     };
     btnCancelAdmit.onclick = closeAdmit;
     btnCloseAdmit.onclick = closeAdmit;
@@ -642,11 +716,17 @@ function setupAdmissionsEvents(container, isNurse, assignedWard) {
         };
     };
 
-    // Admit form submit
     container.querySelector('#admit-form').onsubmit = async (e) => {
         e.preventDefault();
+        const patientIdSelect = container.querySelector('#admit-patient-id');
+        const patientId = patientIdSelect.value;
+        if (!patientId) {
+            alert('Please search and select a patient first.');
+            container.querySelector('#admit-patient-search').focus();
+            return;
+        }
         const payload = {
-            patientId: container.querySelector('#admit-patient-id').value,
+            patientId: patientId,
             roomId: parseInt(container.querySelector('#admit-room-select').value, 10),
             notes: container.querySelector('#admit-notes').value
         };

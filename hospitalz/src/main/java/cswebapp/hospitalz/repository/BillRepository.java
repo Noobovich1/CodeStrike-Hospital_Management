@@ -14,6 +14,9 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     // Get bill by admission
     Optional<Bill> findByAdmission_AdmissionId(Long admissionId);
 
+    // Get bill by appointment
+    Optional<Bill> findByAppointment_Id(Long appointmentId);
+
     // Get all bills for a patient
     List<Bill> findByPatient_PatientId(String patientId);
 

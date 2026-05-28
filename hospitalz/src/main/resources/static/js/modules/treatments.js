@@ -2,6 +2,7 @@ import { api } from "../api.js";
 
 export async function renderTreatments() {
   const container = document.createElement("div");
+  const currentDoctorId = localStorage.getItem('doctorId') || sessionStorage.getItem('doctorId') || '';
 
   container.innerHTML = `
         <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
@@ -23,11 +24,14 @@ export async function renderTreatments() {
             <div id="section-prescribe">
                 <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; background: rgba(0,0,0,0.02); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
                     <label style="font-weight: 500;">Search Prescriptions By:</label>
-                    <select id="presc-search-type" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
-                        <option value="PATIENT">Patient ID</option>
-                        <option value="DOCTOR">Doctor ID</option>
+                    <select id="presc-search-type" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); outline: none;">
+                        <option value="PATIENT">Patient</option>
+                        <option value="DOCTOR">Doctor</option>
                     </select>
-                    <input type="text" id="presc-search-id" placeholder="Enter ID..." style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                    <div style="position: relative; display: inline-block;">
+                        <input type="text" id="presc-search-term" placeholder="Type name, ID or phone..." style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); outline: none; min-width: 250px;">
+                        <select id="presc-search-id" size="4" style="position: absolute; left: 0; top: 100%; width: 100%; z-index: 10; padding: 4px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); display: none; outline: none;"></select>
+                    </div>
                     <button id="btn-presc-search" class="btn btn-primary" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">Search</button>
                 </div>
                 
@@ -82,13 +86,19 @@ export async function renderTreatments() {
                 </div>
                 <form id="prescribe-form">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Patient ID *</label>
-                            <input type="text" id="presc-patient-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                        <div style="${currentDoctorId ? 'grid-column: span 2;' : ''}">
+                            <label style="display: block; margin-bottom: 4px;">Search Patient *</label>
+                            <input type="text" id="presc-patient-search" placeholder="Type name, ID or phone..." required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); outline: none; margin-bottom: 4px;">
+                            <select id="presc-patient-id" size="4" style="width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); display: none; outline: none;"></select>
+                            <small id="presc-patient-hint" style="color: var(--text-secondary); font-size: 0.8em;">Type at least 2 characters to search</small>
                         </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px;">Doctor ID *</label>
-                            <input type="text" id="presc-doctor-id" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                        <div style="${currentDoctorId ? 'display: none;' : ''}">
+                            <label style="display: block; margin-bottom: 4px;">Search Doctor *</label>
+                            <input type="text" id="presc-doctor-search" placeholder="Type name, ID or specialty..." ${currentDoctorId ? '' : 'required'} style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); outline: none; margin-bottom: 4px;">
+                            <select id="presc-doctor-id" size="4" style="width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); display: none; outline: none;">
+                                ${currentDoctorId ? `<option value="${currentDoctorId}" selected>${currentDoctorId}</option>` : ''}
+                            </select>
+                            <small id="presc-doctor-hint" style="color: var(--text-secondary); font-size: 0.8em;">Type at least 2 characters to search</small>
                         </div>
                         <div>
                             <label style="display: block; margin-bottom: 4px;">Treatment *</label>
@@ -267,6 +277,7 @@ async function openEditTreatmentForm(treatmentId) {
 }
 
 function setupTreatmentsEvents(container) {
+  const currentDoctorId = localStorage.getItem('doctorId') || sessionStorage.getItem('doctorId') || '';
   const btnPresc = container.querySelector("#btn-tab-prescribe");
   const btnMaster = container.querySelector("#btn-tab-master");
   const btnPrescribeAction = container.querySelector("#btn-prescribe-action");
@@ -289,6 +300,82 @@ function setupTreatmentsEvents(container) {
   const searchIdInput = container.querySelector("#presc-search-id");
   const searchBtn = container.querySelector("#btn-presc-search");
   const prescHistoryBody = container.querySelector("#presc-history-body");
+  const prescSearchTerm = container.querySelector("#presc-search-term");
+
+  let searchPatients = [];
+  let searchDoctors = [];
+
+  async function loadSearchData() {
+    try {
+      searchPatients = await api.get('/patients');
+      searchDoctors = await api.get('/doctors');
+    } catch (e) {
+      console.error("Failed to load patient/doctor data for main search", e);
+    }
+  }
+  loadSearchData();
+
+  searchType?.addEventListener("change", () => {
+    if (prescSearchTerm) prescSearchTerm.value = "";
+    if (searchIdInput) {
+      searchIdInput.style.display = "none";
+      searchIdInput.innerHTML = "";
+    }
+    if (prescSearchTerm) {
+      prescSearchTerm.placeholder = searchType.value === "PATIENT" ? "Type patient name, ID or phone..." : "Type doctor name, ID or specialty...";
+    }
+  });
+
+  prescSearchTerm?.addEventListener("input", () => {
+    const type = searchType.value;
+    const query = prescSearchTerm.value.toLowerCase().trim();
+    if (query.length < 2) {
+      searchIdInput.style.display = "none";
+      return;
+    }
+
+    if (type === "PATIENT") {
+      const matches = searchPatients.filter(p =>
+        p.fullName?.toLowerCase().includes(query) ||
+        p.patientId?.toLowerCase().includes(query) ||
+        p.phoneNumber?.includes(query)
+      );
+
+      if (matches.length === 0) {
+        searchIdInput.style.display = "none";
+        return;
+      }
+
+      searchIdInput.innerHTML = matches.map(p =>
+        `<option value="${p.patientId}">${p.fullName} (${p.patientId})</option>`
+      ).join('');
+      searchIdInput.style.display = "block";
+    } else {
+      const matches = searchDoctors.filter(d =>
+        d.fullName?.toLowerCase().includes(query) ||
+        d.doctorId?.toLowerCase().includes(query) ||
+        d.specialisation?.toLowerCase().includes(query)
+      );
+
+      if (matches.length === 0) {
+        searchIdInput.style.display = "none";
+        return;
+      }
+
+      searchIdInput.innerHTML = matches.map(d =>
+        `<option value="${d.doctorId}">${d.fullName} (${d.doctorId}) - ${d.specialisation}</option>`
+      ).join('');
+      searchIdInput.style.display = "block";
+    }
+  });
+
+  searchIdInput?.addEventListener("change", () => {
+    const selected = searchIdInput.options[searchIdInput.selectedIndex];
+    if (selected) {
+      prescSearchTerm.value = selected.text;
+      searchIdInput.style.display = "none";
+    }
+  });
 
   // Tab toggles
   btnPresc.addEventListener("click", () => {
@@ -310,24 +397,156 @@ function setupTreatmentsEvents(container) {
     loadMasterTreatments(container);
   });
 
+  let allPatients = [];
+  let allDoctors = [];
+
+  const prescPatientSearch = container.querySelector('#presc-patient-search');
+  const prescPatientId = container.querySelector('#presc-patient-id');
+  const prescPatientHint = container.querySelector('#presc-patient-hint');
+
+  const prescDoctorSearch = container.querySelector('#presc-doctor-search');
+  const prescDoctorId = container.querySelector('#presc-doctor-id');
+  const prescDoctorHint = container.querySelector('#presc-doctor-hint');
+
   // Prescribe Modal events
-  btnPrescribeAction.onclick = () => {
+  btnPrescribeAction.onclick = async () => {
     modalPrescribe.style.display = "flex";
     loadMasterTreatments(container);
+    closePrescModal();
+    modalPrescribe.style.display = "flex";
+
+    try {
+      allPatients = await api.get('/patients');
+      allDoctors = await api.get('/doctors/active');
+    } catch (e) {
+      console.error('Failed to preload data for prescribe form', e);
+    }
   };
+
+  prescPatientSearch?.addEventListener('input', () => {
+    const query = prescPatientSearch.value.toLowerCase().trim();
+    if (query.length < 2) {
+      prescPatientId.style.display = 'none';
+      prescPatientHint.textContent = 'Type at least 2 characters to search';
+      return;
+    }
+
+    const matches = allPatients.filter(p =>
+      p.fullName?.toLowerCase().includes(query) ||
+      p.patientId?.toLowerCase().includes(query) ||
+      p.phoneNumber?.includes(query)
+    );
+
+    if (matches.length === 0) {
+      prescPatientId.style.display = 'none';
+      prescPatientHint.textContent = 'No patients matching';
+      return;
+    }
+
+    prescPatientId.innerHTML = matches.map(p =>
+      `<option value="${p.patientId}">${p.fullName} (${p.patientId})</option>`
+    ).join('');
+    prescPatientId.style.display = 'block';
+    prescPatientHint.textContent = `Found ${matches.length} results — click to select`;
+
+    if (matches.length === 1) {
+      prescPatientId.selectedIndex = 0;
+      prescPatientHint.textContent = `✓ Selected: ${matches[0].fullName} (${matches[0].patientId})`;
+    }
+  });
+
+  prescPatientId?.addEventListener('change', () => {
+    const selected = prescPatientId.options[prescPatientId.selectedIndex];
+    if (selected) {
+      prescPatientHint.textContent = `✓ Selected: ${selected.text}`;
+      prescPatientSearch.value = selected.text;
+    }
+  });
+
+  prescDoctorSearch?.addEventListener('input', () => {
+    const query = prescDoctorSearch.value.toLowerCase().trim();
+    if (query.length < 2) {
+      prescDoctorId.style.display = 'none';
+      prescDoctorHint.textContent = 'Type at least 2 characters to search';
+      return;
+    }
+
+    const matches = allDoctors.filter(d =>
+      d.fullName?.toLowerCase().includes(query) ||
+      d.doctorId?.toLowerCase().includes(query) ||
+      d.specialisation?.toLowerCase().includes(query)
+    );
+
+    if (matches.length === 0) {
+      prescDoctorId.style.display = 'none';
+      prescDoctorHint.textContent = 'No active doctors matching';
+      return;
+    }
+
+    prescDoctorId.innerHTML = matches.map(d =>
+      `<option value="${d.doctorId}">${d.fullName} (${d.doctorId}) - ${d.specialisation}</option>`
+    ).join('');
+    prescDoctorId.style.display = 'block';
+    prescDoctorHint.textContent = `Found ${matches.length} results — click to select`;
+
+    if (matches.length === 1) {
+      prescDoctorId.selectedIndex = 0;
+      prescDoctorHint.textContent = `✓ Selected: ${matches[0].fullName} (${matches[0].doctorId})`;
+    }
+  });
+
+  prescDoctorId?.addEventListener('change', () => {
+    const selected = prescDoctorId.options[prescDoctorId.selectedIndex];
+    if (selected) {
+      prescDoctorHint.textContent = `✓ Selected: ${selected.text}`;
+      prescDoctorSearch.value = selected.text;
+    }
+  });
 
   const closePrescModal = () => {
     modalPrescribe.style.display = "none";
     prescribeForm.reset();
+    
+    if (prescPatientSearch) prescPatientSearch.value = '';
+    if (prescPatientId) {
+      prescPatientId.style.display = 'none';
+      prescPatientId.innerHTML = '';
+    }
+    if (prescPatientHint) prescPatientHint.textContent = 'Type at least 2 characters to search';
+
+    if (prescDoctorSearch) prescDoctorSearch.value = '';
+    if (prescDoctorId) {
+      prescDoctorId.style.display = 'none';
+      if (currentDoctorId) {
+        prescDoctorId.innerHTML = `<option value="${currentDoctorId}" selected>${currentDoctorId}</option>`;
+      } else {
+        prescDoctorId.innerHTML = '';
+      }
+    }
+    if (prescDoctorHint) prescDoctorHint.textContent = 'Type at least 2 characters to search';
   };
   closePrescribe.onclick = closePrescModal;
   cancelPrescribe.onclick = closePrescModal;
 
   prescribeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const patientId = prescPatientId.value;
+    const doctorId = prescDoctorId.value;
+
+    if (!patientId) {
+      alert('Please search and select a patient first.');
+      prescPatientSearch.focus();
+      return;
+    }
+    if (!doctorId) {
+      alert('Please search and select a doctor first.');
+      prescDoctorSearch.focus();
+      return;
+    }
+
     const payload = {
-      patientId: document.getElementById("presc-patient-id").value,
-      doctorId: document.getElementById("presc-doctor-id").value,
+      patientId: patientId,
+      doctorId: doctorId,
       treatmentId: parseInt(
         document.getElementById("presc-treatment-id").value,
         10,
@@ -394,7 +613,8 @@ function setupTreatmentsEvents(container) {
   searchBtn.addEventListener("click", async () => {
     const queryVal = searchIdInput.value.trim();
     if (queryVal === "") {
-      alert("Please enter an ID");
+      alert("Please search and select a patient or doctor first.");
+      if (prescSearchTerm) prescSearchTerm.focus();
       return;
     }
 
