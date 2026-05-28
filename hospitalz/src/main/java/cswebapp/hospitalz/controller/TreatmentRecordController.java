@@ -42,4 +42,11 @@ public class TreatmentRecordController {
     public ResponseEntity<Double> getTotalCost(@PathVariable String patientId) {
         return ResponseEntity.ok(treatmentRecordService.getTotalTreatmentCostForPatient(patientId));
     }
+
+    @PutMapping("/{id}/notes")
+    public ResponseEntity<TreatmentRecord> updateNotes(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> payload) {
+        return ResponseEntity.ok(treatmentRecordService.updateNotes(id, payload.get("notes")));
+    }
 }

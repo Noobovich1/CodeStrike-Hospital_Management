@@ -295,15 +295,105 @@ export async function renderDoctorPatientList() {
                     <thead>
                         <tr style="border-bottom: 2px solid var(--border-color);">
                             <th style="padding: 12px;">Patient ID</th>
-                            <th style="padding: 12px;">Name</th>
-                            <th style="padding: 12px;">Primary Doctor</th>
-                            <th style="padding: 12px;">Notes</th>
+                            <th style="padding: 12px;">Full Name</th>
+                            <th style="padding: 12px;">Primary Doctor?</th>
+                            <th style="padding: 12px;">Assignment Notes</th>
+                            <th style="padding: 12px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="doc-patient-list">
-                        <tr><td colspan="4" style="text-align: center; padding: 20px;">Loading patients...</td></tr>
+                        <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading patient list...</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Doctor Patient Detail & Clinical Modal -->
+        <div id="doc-patient-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="glass-panel" style="background: var(--bg-primary); width: 95%; max-width: 850px; padding: 24px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                    <h3 style="margin: 0;"><i class="fa-solid fa-user-doctor" style="color: var(--accent-primary);"></i> Manage Patient Record & Prescriptions</h3>
+                    <button id="close-doc-patient-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <!-- Demographics info -->
+                    <div style="background: rgba(100,116,139,0.03); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <h4 style="margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--accent-primary);">Administrative Information</h4>
+                        <p style="margin: 6px 0;"><strong>Full Name:</strong> <span id="doc-p-name">-</span></p>
+                        <p style="margin: 6px 0;"><strong>Patient ID:</strong> <span id="doc-p-id">-</span></p>
+                        <p style="margin: 6px 0;"><strong>Date of Birth:</strong> <span id="doc-p-dob">-</span></p>
+                        <p style="margin: 6px 0;"><strong>Gender:</strong> <span id="doc-p-gender">-</span></p>
+                        <p style="margin: 6px 0;"><strong>Phone:</strong> <span id="doc-p-phone">-</span></p>
+                        <p style="margin: 6px 0;"><strong>Blood Group:</strong> <span id="doc-p-blood">-</span></p>
+                        <p style="margin: 6px 0;"><strong>Status:</strong> <span id="doc-p-status" style="font-weight: 600;">-</span></p>
+                    </div>
+
+                    <!-- Clinical Edit Form -->
+                    <div style="background: rgba(100,116,139,0.03); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <h4 style="margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--accent-primary);">Diagnosis & Clinical Notes</h4>
+                        <form id="doc-clinical-form">
+                            <input type="hidden" id="clinical-p-id">
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 0.85em; font-weight: 500; margin-bottom: 4px;">Clinical Diagnosis (disease_description)</label>
+                                <textarea id="clinical-disease-desc" rows="2" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); font-family: inherit; font-size: 0.9em;"></textarea>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 0.85em; font-weight: 500; margin-bottom: 4px;">Current Treatment Notes</label>
+                                <textarea id="clinical-treatment-notes" rows="2" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); font-family: inherit; font-size: 0.9em;"></textarea>
+                            </div>
+                            <button type="submit" style="width: 100%; padding: 8px; background: var(--status-success); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Clinical Notes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
+                    <!-- Treatment History -->
+                    <div>
+                        <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--accent-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">Treatment & Orders History</h4>
+                        <div style="overflow-y: auto; max-height: 250px;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85em;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                                        <th style="padding: 6px;">Date</th>
+                                        <th style="padding: 6px;">Treatment / Order</th>
+                                        <th style="padding: 6px; text-align: right;">Qty</th>
+                                        <th style="padding: 6px;">Doctor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="doc-p-treatment-history">
+                                    <tr><td colspan="4" style="text-align: center; padding: 10px;">No data available</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Prescribe Form -->
+                    <div style="background: rgba(14, 165, 233, 0.03); padding: 16px; border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.2);">
+                        <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--accent-primary); border-bottom: 1px solid rgba(14, 165, 233, 0.2); padding-bottom: 6px;">New Prescription & Order</h4>
+                        <form id="doc-prescribe-form">
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; font-size: 0.8em; margin-bottom: 2px;">Service / Medication *</label>
+                                <select id="doc-presc-treatment-id" required style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.85em;">
+                                    <option value="">Loading services...</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; font-size: 0.8em; margin-bottom: 2px;">Quantity *</label>
+                                <input type="number" id="doc-presc-qty" min="1" value="1" required style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.85em;">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 0.8em; margin-bottom: 2px;">Instructions / Notes</label>
+                                <input type="text" id="doc-presc-notes" placeholder="Dosage, usage directions..." style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.85em;">
+                            </div>
+                            <button type="submit" style="width: 100%; padding: 8px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85em;">
+                                <i class="fa-solid fa-file-prescription"></i> Submit Order
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -314,33 +404,188 @@ export async function renderDoctorPatientList() {
 
     if (!doctorId) {
       tbody.innerHTML =
-        '<tr><td colspan="4" style="text-align:center; color: var(--status-danger);">No doctor profile is linked to this account.</td></tr>';
+        '<tr><td colspan="5" style="text-align:center; color: var(--status-danger);">This account is not linked to any doctor profile.</td></tr>';
       return;
     }
 
-    try {
-      const list = await api.get(`/doctor-patient/doctor/${doctorId}/patients`);
-      if (!list || list.length === 0) {
+    // Load doctor's patients
+    async function loadDoctorPatients() {
+      try {
+        const list = await api.get(`/doctor-patient/doctor/${doctorId}/patients`);
+        if (!list || list.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;">You are not assigned to any patient.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list
+          .map(
+            (dp) => `
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                      <td style="padding: 12px;">${dp.patient?.patientId}</td>
+                      <td style="padding: 12px; font-weight: 500;">${dp.patient?.fullName}</td>
+                      <td style="padding: 12px;">${dp.isPrimary ? '<span style="color:var(--status-success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Yes</span>' : "No"}</td>
+                      <td style="padding: 12px; color: var(--text-secondary);">${dp.notes || "-"}</td>
+                      <td style="padding: 12px;">
+                          <button class="btn btn-primary btn-manage-p" data-id="${dp.patient?.patientId}" style="padding: 4px 8px; background: var(--accent-primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 4px;">
+                              <i class="fa-solid fa-user-md"></i> Manage
+                          </button>
+                      </td>
+                  </tr>
+              `,
+          )
+          .join("");
+
+        // Attach click events
+        container.querySelectorAll(".btn-manage-p").forEach(btn => {
+          btn.onclick = () => openPatientClinicalModal(btn.dataset.id);
+        });
+
+      } catch (e) {
         tbody.innerHTML =
-          '<tr><td colspan="4" style="text-align:center;">No patients assigned.</td></tr>';
+          '<tr><td colspan="5" style="text-align:center; color: var(--status-danger);">Error loading patient list.</td></tr>';
+      }
+    }
+
+    await loadDoctorPatients();
+
+    // Modal management
+    const modal = container.querySelector("#doc-patient-modal");
+    const closeBtn = container.querySelector("#close-doc-patient-modal");
+    const clinicalForm = container.querySelector("#doc-clinical-form");
+    const prescribeForm = container.querySelector("#doc-prescribe-form");
+
+    closeBtn.onclick = () => {
+      modal.style.display = "none";
+      clinicalForm.reset();
+      prescribeForm.reset();
+    };
+
+    // Open clinical modal
+    async function openPatientClinicalModal(patientId) {
+      modal.style.display = "flex";
+      container.querySelector("#clinical-p-id").value = patientId;
+
+      // Populate info
+      try {
+        const p = await api.get(`/patients/${patientId}`);
+        container.querySelector("#doc-p-name").textContent = p.fullName;
+        container.querySelector("#doc-p-id").textContent = p.patientId;
+        container.querySelector("#doc-p-dob").textContent = p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-US") : "-";
+        container.querySelector("#doc-p-gender").textContent = p.gender === "MALE" ? "Male" : (p.gender === "FEMALE" ? "Female" : "Other");
+        container.querySelector("#doc-p-phone").textContent = p.phoneNumber || "-";
+        container.querySelector("#doc-p-blood").textContent = p.bloodGroup || "-";
+        
+        const statusEl = container.querySelector("#doc-p-status");
+        statusEl.textContent = p.status || "OUTPATIENT";
+        if (p.status === "INPATIENT") {
+          statusEl.style.color = "var(--status-success)";
+        } else {
+          statusEl.style.color = "var(--accent-primary)";
+        }
+
+        container.querySelector("#clinical-disease-desc").value = p.diseaseDescription || "";
+        container.querySelector("#clinical-treatment-notes").value = p.currentTreatmentNotes || "";
+
+        // Load treatment history
+        await loadTreatmentHistory(patientId);
+
+        // Load master active treatments for select list
+        await loadActiveTreatmentsDropdown();
+
+      } catch (err) {
+        alert("Error loading patient details: " + err.message);
+      }
+    }
+
+    async function loadTreatmentHistory(patientId) {
+      const histBody = container.querySelector("#doc-p-treatment-history");
+      histBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px;">Loading...</td></tr>';
+      try {
+        const records = await api.get(`/treatment-records/patient/${patientId}`);
+        if (!records || records.length === 0) {
+          histBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color: var(--text-secondary);">No treatment services prescribed yet.</td></tr>';
+          return;
+        }
+        histBody.innerHTML = records.map(r => `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 6px;">${r.sessionDate ? new Date(r.sessionDate).toLocaleDateString("en-US") : "-"}</td>
+            <td style="padding: 6px; font-weight: 500;">${r.treatment?.name}</td>
+            <td style="padding: 6px; text-align: right;">${r.quantity}</td>
+            <td style="padding: 6px;">${r.doctor?.fullName || "-"}</td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        histBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color: var(--status-danger);">Error loading treatment history.</td></tr>';
+      }
+    }
+
+    async function loadActiveTreatmentsDropdown() {
+      const select = container.querySelector("#doc-presc-treatment-id");
+      try {
+        const treatments = await api.get("/treatments/active");
+        if (treatments.length === 0) {
+          select.innerHTML = '<option value="">No services available</option>';
+          return;
+        }
+        select.innerHTML = '<option value="">Select service/order...</option>' + 
+          treatments.map(t => `<option value="${t.treatmentId}">${t.name} ($${t.unitCost})</option>`).join("");
+      } catch (err) {
+        select.innerHTML = '<option value="">Error loading services</option>';
+      }
+    }
+
+    // Submit clinical details
+    clinicalForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const patientId = container.querySelector("#clinical-p-id").value;
+      const payload = {
+        diseaseDescription: container.querySelector("#clinical-disease-desc").value,
+        currentTreatmentNotes: container.querySelector("#clinical-treatment-notes").value
+      };
+
+      try {
+        await api.patch(`/patients/${patientId}/clinical`, payload);
+        alert("Diagnosis updated successfully!");
+        // Refresh doctor's patients list
+        await loadDoctorPatients();
+      } catch (err) {
+        alert("Error saving clinical info: " + err.message);
+      }
+    };
+
+    // Submit prescription / treatment record
+    prescribeForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const patientId = container.querySelector("#clinical-p-id").value;
+      const treatmentId = parseInt(container.querySelector("#doc-presc-treatment-id").value, 10);
+      const qty = parseInt(container.querySelector("#doc-presc-qty").value, 10);
+      const notes = container.querySelector("#doc-presc-notes").value;
+
+      if (!treatmentId) {
+        alert("Please select a treatment service.");
         return;
       }
-      tbody.innerHTML = list
-        .map(
-          (dp) => `
-                <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 12px;">${dp.patient?.patientId}</td>
-                    <td style="padding: 12px; font-weight: 500;">${dp.patient?.fullName}</td>
-                    <td style="padding: 12px;">${dp.isPrimary ? '<span style="color:var(--status-success)">Yes</span>' : "No"}</td>
-                    <td style="padding: 12px; color: var(--text-secondary);">${dp.notes || "-"}</td>
-                </tr>
-            `,
-        )
-        .join("");
-    } catch (e) {
-      tbody.innerHTML =
-        '<tr><td colspan="4" style="text-align:center; color: var(--status-danger);">Error loading your patients</td></tr>';
-    }
+
+      const payload = {
+        patientId: patientId,
+        doctorId: doctorId,
+        treatmentId: treatmentId,
+        quantity: qty,
+        notes: notes
+      };
+
+      try {
+        await api.post("/treatment-records", payload);
+        alert("Prescription/order submitted successfully!");
+        prescribeForm.reset();
+        container.querySelector("#doc-presc-qty").value = 1;
+        // Refresh history
+        await loadTreatmentHistory(patientId);
+      } catch (err) {
+        alert("Error submitting order: " + err.message);
+      }
+    };
+
   }, 0);
 
   return container;

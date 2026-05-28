@@ -5,6 +5,7 @@ import cswebapp.hospitalz.model.*;
 import cswebapp.hospitalz.repository.DoctorRepository;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.UserRepository;
+import cswebapp.hospitalz.repository.StaffRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder; // Thêm import này
@@ -27,6 +28,9 @@ public class AuthController {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private StaffRepository staffRepository;
 
     @Autowired
     private JwtService jwtService;
@@ -56,6 +60,12 @@ public class AuthController {
                 Patient patient = patientRepository.findByUser_Id(user.getId()).orElse(null);
                 if (patient != null) {
                     response.put("patientId", patient.getPatientId());
+                }
+            } else if ("NURSE".equals(user.getRole().name()) || "WARD_BOY".equals(user.getRole().name())) {
+                Staff staff = staffRepository.findByUser_Id(user.getId()).orElse(null);
+                if (staff != null) {
+                    response.put("staffId", staff.getStaffId());
+                    response.put("assignedWard", staff.getAssignedWard());
                 }
             }
 

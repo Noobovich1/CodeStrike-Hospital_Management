@@ -31,4 +31,14 @@ public class PatientService {
             .orElseThrow(() -> new ResourceNotFoundException("Patient not found: " + patientId));
     }
 
+    public Patient updateClinicalDetails(String patientId, String diseaseDescription, String currentTreatmentNotes) {
+        Patient patient = getPatientById(patientId);
+        if (diseaseDescription != null) {
+            patient.setDiseaseDescription(diseaseDescription);
+        }
+        if (currentTreatmentNotes != null) {
+            patient.setCurrentTreatmentNotes(currentTreatmentNotes);
+        }
+        return patientRepository.save(patient);
+    }
 }

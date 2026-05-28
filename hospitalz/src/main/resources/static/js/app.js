@@ -49,6 +49,7 @@ const roleConfig = {
         name: 'Receptionist',
         menu: [
             { id: 'register', icon: 'fa-address-card', label: 'Register Patient' },
+            { id: 'ward-patients', icon: 'fa-bed-pulse', label: 'Admissions' },
             { id: 'appointments', icon: 'fa-calendar-check', label: 'Appointments' }
         ]
     },
@@ -172,18 +173,16 @@ async function loadModule(moduleId, moduleTitle) {
                 break;
             // app.js — add inside the switch statemen
             case 'vitals':
-                // Nurse vitals tab — reuse admissions view (ward patients)
-                module = await import('./modules/admissions.js');
-                renderFunction = module.renderActiveAdmissions;
+                module = await import('./modules/vitals.js');
+                renderFunction = module.renderVitalsDashboard;
                 break;
             case 'appointments':
                 module = await import('./modules/appointments.js');
                 renderFunction = module.renderAppointments;
                 break;
             case 'my-records':
-                // Patient records tab — reuse patients view
-                module = await import('./modules/patients.js');
-                renderFunction = module.renderRegisterForm;
+                module = await import('./modules/records.js');
+                renderFunction = module.renderPatientRecords;
                 break;
             // Add other module cases as they are implemented
             default:
@@ -203,6 +202,19 @@ async function loadModule(moduleId, moduleTitle) {
     }
 }
 
+function decodeJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
 function checkAuth() {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token) {
@@ -210,9 +222,21 @@ function checkAuth() {
         return false;
     }
     
-    // Lấy thông tin từ localStorage hoặc sessionStorage để hiển thị UI
-    currentRole = localStorage.getItem('role') || sessionStorage.getItem('role') || 'PATIENT';
-    const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+    const decoded = decodeJwt(token);
+    if (!decoded || !decoded.role) {
+        logout();
+        return false;
+    }
+    
+    currentRole = decoded.role;
+    // Sync to storage
+    if (localStorage.getItem('token')) {
+        localStorage.setItem('role', currentRole);
+    } else {
+        sessionStorage.setItem('role', currentRole);
+    }
+
+    const username = decoded.sub || localStorage.getItem('username') || sessionStorage.getItem('username');
     
     // Cập nhật tên hiển thị trên sidebar
     document.querySelector('.user-name').textContent = username || 'User';
@@ -227,6 +251,8 @@ function logout() {
     localStorage.removeItem("role");
     localStorage.removeItem("username");
     localStorage.removeItem("doctorId");
+    localStorage.removeItem("staffId");
+    localStorage.removeItem("assignedWard");
     sessionStorage.clear();
     window.location.href = '/auth.html';
 }
@@ -270,18 +296,17 @@ function init() {
     initResponsiveUI();
     initSettingsModal();
     
-    // Setup Role Switcher
+    // Setup Role Switcher - Disabled/Hidden in production and since JWT is source of truth
     if (roleSelect) {
-        roleSelect.value = currentRole;
-        roleSelect.addEventListener('change', (e) => {
-            currentRole = e.target.value;
-            localStorage.setItem('role', currentRole); // ← sync role with modules reading from localStorage
-            Object.keys(moduleCache).forEach(k => delete moduleCache[k]); // ← clear cache on role switch
-            displayRole.textContent = roleConfig[currentRole].name;
-            renderSidebar();
-            const firstModule = roleConfig[currentRole].menu[0];
-            if (firstModule) loadModule(firstModule.id, firstModule.label);
-        });
+        roleSelect.style.display = 'none';
+        const label = roleSelect.previousElementSibling;
+        if (label && label.tagName === 'LABEL') {
+            label.style.display = 'none';
+        }
+        const parent = roleSelect.closest('.role-switcher');
+        if (parent) {
+            parent.style.display = 'none';
+        }
     }
 
     // Setup Logout
@@ -292,7 +317,12 @@ function init() {
     
     // Initial render
     renderSidebar();
-    loadModule('dashboard', 'Dashboard');
+    const firstModule = roleConfig[currentRole]?.menu[0];
+    if (firstModule) {
+        loadModule(firstModule.id, firstModule.label);
+    } else {
+        loadModule('dashboard', 'Dashboard');
+    }
 }
 
 // Start app
