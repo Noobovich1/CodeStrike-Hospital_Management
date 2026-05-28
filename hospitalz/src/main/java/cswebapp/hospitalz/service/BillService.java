@@ -186,6 +186,11 @@ public class BillService {
             throw new RuntimeException("Bill " + billId + " is already fully paid.");
         }
 
+        // Validate payment amount is positive
+        if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Payment amount must be positive.");
+        }
+
         BigDecimal newPaidAmount = bill.getPaidAmount().add(request.getAmount());
 
         // Cap paid amount at total — can't overpay

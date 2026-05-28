@@ -1,6 +1,7 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
+import cswebapp.hospitalz.dto.ChangePasswordRequest;
 import cswebapp.hospitalz.dto.RoleUpdateRequest;
 import cswebapp.hospitalz.model.User;
 import cswebapp.hospitalz.model.UserRole;
