@@ -126,13 +126,18 @@ public class BillService {
 
         Patient patient = appointment.getPatient();
         double roomCharges = 0.0;
-        double treatmentCharges = 0.0;
+        
+        java.time.LocalDateTime start = appointment.getAppointmentDate().toLocalDate().atStartOfDay();
+        java.time.LocalDateTime end = appointment.getAppointmentDate().toLocalDate().atTime(23, 59, 59);
+        double treatmentCharges = treatmentRecordRepository
+                .sumTreatmentCostByPatientAndDateRange(patient.getPatientId(), start, end);
+        
         double doctorCharges = 0.0;
         double outpatientCharges = appointment.getDoctor().getConsultationFee();
 
         double discount = 0.0;
         double taxPercent = 10.0;
-        double subtotal = outpatientCharges;
+        double subtotal = outpatientCharges + treatmentCharges;
         double afterDiscount = subtotal - (subtotal * discount / 100);
         double totalAmount = afterDiscount + (afterDiscount * taxPercent / 100);
 
@@ -388,7 +393,7 @@ public class BillService {
                 alternatingRow = !alternatingRow;
             }
 
-            // 3.2 Treatments and Prescriptions performed during admission
+            // 3.2 Treatments and Prescriptions performed during admission or outpatient visit
             if (admission != null) {
                 List<TreatmentRecord> treatmentRecords = treatmentRecordRepository.findByPatient_PatientId(patient.getPatientId());
                 LocalDateTime start = admission.getAdmissionDate();
@@ -396,6 +401,28 @@ public class BillService {
 
                 for (TreatmentRecord tr : treatmentRecords) {
                     if (tr.getSessionDate().isAfter(start.minusMinutes(1)) && tr.getSessionDate().isBefore(end.plusMinutes(1))) {
+                        PdfPCell descCell = new PdfPCell(new Phrase(tr.getTreatment().getName() + " (Dr. " + tr.getDoctor().getFullName() + ")", normalFont));
+                        PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", tr.getUnitCostSnapshot()), normalFont));
+                        PdfPCell qtyCell = new PdfPCell(new Phrase(String.valueOf(tr.getQuantity()), normalFont));
+                        double amount = tr.getUnitCostSnapshot() * tr.getQuantity();
+                        PdfPCell amtCell = new PdfPCell(new Phrase("$" + String.format("%.2f", amount), normalFont));
+
+                        styleRowCells(descCell, rateCell, qtyCell, amtCell, lightBgColor, borderColor, alternatingRow);
+                        itemTable.addCell(descCell);
+                        itemTable.addCell(rateCell);
+                        itemTable.addCell(qtyCell);
+                        itemTable.addCell(amtCell);
+                        alternatingRow = !alternatingRow;
+                    }
+                }
+            } else if (bill.getAppointment() != null) {
+                List<TreatmentRecord> treatmentRecords = treatmentRecordRepository.findByPatient_PatientId(patient.getPatientId());
+                Appointment app = bill.getAppointment();
+                LocalDateTime start = app.getAppointmentDate().toLocalDate().atStartOfDay();
+                LocalDateTime end = app.getAppointmentDate().toLocalDate().atTime(23, 59, 59);
+
+                for (TreatmentRecord tr : treatmentRecords) {
+                    if (tr.getSessionDate().isAfter(start.minusSeconds(1)) && tr.getSessionDate().isBefore(end.plusSeconds(1))) {
                         PdfPCell descCell = new PdfPCell(new Phrase(tr.getTreatment().getName() + " (Dr. " + tr.getDoctor().getFullName() + ")", normalFont));
                         PdfPCell rateCell = new PdfPCell(new Phrase("$" + String.format("%.2f", tr.getUnitCostSnapshot()), normalFont));
                         PdfPCell qtyCell = new PdfPCell(new Phrase(String.valueOf(tr.getQuantity()), normalFont));

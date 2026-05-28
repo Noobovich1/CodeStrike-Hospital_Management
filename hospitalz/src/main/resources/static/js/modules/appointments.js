@@ -199,16 +199,31 @@ async function loadAppointments(container, isPatient, isDoctor, isReceptionist) 
                                     <i class="fa-solid fa-user-doctor"></i> Assign
                                 </button>
                             ` : ''}
-                            ${isReceptionist && a.status === 'PENDING' && a.doctor ? `
+                            ${(isReceptionist || isDoctor) && a.status === 'PENDING' && a.doctor ? `
                                 <button class="btn btn-complete-appt" data-id="${a.id}" style="padding: 4px 8px; background: var(--status-success); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
                                     <i class="fa-solid fa-check"></i> Complete
                                 </button>
+                            ` : ''}
+                            ${isReceptionist && a.status === 'COMPLETED' && !a.isBilled ? `
+                                <button class="btn btn-generate-bill-appt" data-id="${a.id}" style="padding: 4px 8px; background: var(--accent-primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
+                                    <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill
+                                </button>
+                            ` : ''}
+                            ${isReceptionist && a.status === 'COMPLETED' && a.isBilled ? `
+                                <span style="font-size: 0.85em; color: var(--text-secondary); font-weight: 500;">
+                                    <i class="fa-solid fa-receipt"></i> Billed
+                                </span>
                             ` : ''}
                             ${a.status === 'PENDING' ? `
                                 <button class="btn btn-cancel-appt-action" data-id="${a.id}" style="padding: 4px 8px; background: var(--status-danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
                                     <i class="fa-solid fa-ban"></i> Cancel
                                 </button>
-                            ` : '-'}
+                            ` : ''}
+                            ${a.status === 'COMPLETED' && !isReceptionist ? `
+                                <span style="font-size: 0.85em; color: var(--text-secondary); font-weight: 500;">
+                                    Finished
+                                </span>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>
@@ -231,10 +246,25 @@ async function loadAppointments(container, isPatient, isDoctor, isReceptionist) 
         tbody.querySelectorAll('.btn-complete-appt').forEach(btn => {
             btn.onclick = async () => {
                 const id = btn.dataset.id;
-                if (confirm('Mark appointment ID ' + id + ' as COMPLETED? This will add the consultation fee to the patient\'s next billing.')) {
+                if (confirm('Mark appointment ID ' + id + ' as COMPLETED? This will freeze the visit and allow generating the bill.')) {
                     try {
                         await api.put(`/appointments/${id}/status?status=COMPLETED`);
                         alert('Appointment completed!');
+                        loadAppointments(container, isPatient, isDoctor, isReceptionist);
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                }
+            };
+        });
+
+        tbody.querySelectorAll('.btn-generate-bill-appt').forEach(btn => {
+            btn.onclick = async () => {
+                const id = btn.dataset.id;
+                if (confirm('Generate outpatient bill for appointment ID ' + id + '?')) {
+                    try {
+                        await api.post(`/bills/generate/outpatient/${id}`);
+                        alert('Outpatient bill generated successfully!');
                         loadAppointments(container, isPatient, isDoctor, isReceptionist);
                     } catch (error) {
                         alert('Error: ' + error.message);
