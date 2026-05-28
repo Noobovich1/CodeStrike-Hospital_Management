@@ -56,8 +56,10 @@ public class BillService {
         double roomCharges = admission.getRoom().getDailyRate() * admission.getTotalDays();
 
         // 5. Calculate treatment charges — uses the snapshot cost, not current price
+        LocalDateTime start = admission.getAdmissionDate();
+        LocalDateTime end = admission.getDischargeDate() != null ? admission.getDischargeDate() : LocalDateTime.now();
         double treatmentCharges = treatmentRecordRepository
-                .sumTreatmentCostByPatient(patientId);
+                .sumTreatmentCostByPatientAndDateRange(patientId, start.minusSeconds(1), end.plusSeconds(1));
 
         // 6. Calculate doctor charges — sum consultation fees of all assigned doctors
         List<DoctorPatient> assignments = doctorPatientRepository
@@ -205,12 +207,18 @@ public class BillService {
             BaseColor borderColor = new BaseColor(226, 232, 240); // #e2e8f0
 
             // Fonts
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, primaryColor);
-            Font sectionHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, darkColor);
-            Font subTitleFont = FontFactory.getFont(FontFactory.HELVETICA, 10, greyColor);
-            Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, darkColor);
-            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 9, darkColor);
-            Font tableHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.WHITE);
+            BaseFont baseFontUnicode;
+            try {
+                baseFontUnicode = BaseFont.createFont("C:/Windows/Fonts/arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            } catch (Exception e) {
+                baseFontUnicode = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+            }
+            Font titleFont = new Font(baseFontUnicode, 22, Font.BOLD, primaryColor);
+            Font sectionHeaderFont = new Font(baseFontUnicode, 11, Font.BOLD, darkColor);
+            Font subTitleFont = new Font(baseFontUnicode, 10, Font.NORMAL, greyColor);
+            Font boldFont = new Font(baseFontUnicode, 9, Font.BOLD, darkColor);
+            Font normalFont = new Font(baseFontUnicode, 9, Font.NORMAL, darkColor);
+            Font tableHeaderFont = new Font(baseFontUnicode, 9, Font.BOLD, BaseColor.WHITE);
 
             // 1. Hospital Header
             PdfPTable headerTable = new PdfPTable(2);
@@ -438,7 +446,7 @@ public class BillService {
             document.add(footerSub);
 
             document.close();
-        } catch (DocumentException e) {
+        } catch (DocumentException | java.io.IOException e) {
             throw new RuntimeException("Error during PDF document creation: " + e.getMessage());
         }
 

@@ -188,8 +188,8 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
                         <button class="btn-icon btn-icon-view btn-view-bill" data-id="${b.billId}" title="View Details">
                             <i class="fa-solid fa-eye"></i>
                         </button>
-                        ${!isPatient && b.paymentStatus !== 'PAID' ? `
-                            <button class="btn-icon btn-icon-pay btn-pay-bill" data-id="${b.billId}" title="Record Payment">
+                        ${b.paymentStatus !== 'PAID' ? `
+                            <button class="btn-icon btn-icon-pay btn-pay-bill" data-id="${b.billId}" title="Pay Bill">
                                 <i class="fa-solid fa-wallet"></i>
                             </button>
                         ` : ''}
@@ -206,12 +206,10 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
         // Attach events safely
         container.querySelectorAll('.btn-view-bill').forEach(btn => btn.onclick = () => showBillDetails(btn.dataset.id, container));
         
-        if (!isPatient) {
-            container.querySelectorAll('.btn-pay-bill').forEach(btn => btn.onclick = () => {
-                container.querySelector('#pay-bill-id').value = btn.dataset.id;
-                container.querySelector('#pay-modal').style.display = 'flex';
-            });
-        }
+        container.querySelectorAll('.btn-pay-bill').forEach(btn => btn.onclick = () => {
+            container.querySelector('#pay-bill-id').value = btn.dataset.id;
+            container.querySelector('#pay-modal').style.display = 'flex';
+        });
         
         if (isAdmin) {
             container.querySelectorAll('.btn-disc-bill').forEach(btn => btn.onclick = () => {
@@ -313,65 +311,12 @@ async function showBillDetails(billId, container) {
 
 function setupBillingEvents(container, isAdmin) {
     const isPatient = (localStorage.getItem('role') || sessionStorage.getItem('role')) === 'PATIENT';
-    if (isPatient) {
-        container.querySelector('#close-bill-modal').onclick = () => {
-            container.querySelector('#bill-modal').style.display = 'none';
-        };
-        return;
-    }
-
-    const btnGen = container.querySelector('#btn-generate-bill');
-    const modalGen = container.querySelector('#gen-bill-modal');
-    const closeGen = container.querySelector('#close-gen-bill-modal');
-    const cancelGen = container.querySelector('#btn-cancel-gen-bill');
-    
-    const searchType = container.querySelector('#bill-search-type');
-    const searchInput = container.querySelector('#bill-search-input');
-    const searchBtn = container.querySelector('#btn-bill-search');
-
-    // Search input toggle
-    searchType.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (val === 'ALL') {
-            searchInput.style.display = 'none';
-            searchBtn.style.display = 'none';
-            loadBillsData(container, isAdmin, 'ALL');
-        } else {
-            searchInput.style.display = 'block';
-            searchBtn.style.display = 'block';
-            searchInput.placeholder = val === 'PATIENT' ? 'Patient ID (e.g. PAT-123)...' : 'Admission ID...';
-        }
-    });
-
-    searchBtn.addEventListener('click', () => {
-        loadBillsData(container, isAdmin, searchType.value, searchInput.value);
-    });
-
-    if (btnGen) {
-        btnGen.onclick = () => {
-            modalGen.style.display = 'flex';
-        };
-    }
-
-    const closeGenModal = () => {
-        modalGen.style.display = 'none';
-        container.querySelector('#gen-bill-form').reset();
+    // Đóng Modal chi tiết hóa đơn (Dùng chung)
+    container.querySelector('#close-bill-modal').onclick = () => {
+        container.querySelector('#bill-modal').style.display = 'none';
     };
-    if (closeGen) closeGen.onclick = closeGenModal;
-    if (cancelGen) cancelGen.onclick = closeGenModal;
 
-    container.querySelector('#gen-bill-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const admId = document.getElementById('gen-admission-id').value;
-        try {
-            await api.post(`/bills/generate/${admId}`);
-            alert('Bill generated!');
-            closeGenModal();
-            loadBillsData(container, isAdmin, searchType.value, searchInput.value);
-        } catch (err) { alert('Error: ' + err.message); }
-    });
-
-    // Pay Modal
+    // Xử lý Modal thanh toán (Dùng chung)
     const modalPay = container.querySelector('#pay-modal');
     const closePay = container.querySelector('#close-pay-modal');
     const cancelPay = container.querySelector('#btn-cancel-pay');
@@ -387,13 +332,74 @@ function setupBillingEvents(container, isAdmin) {
         e.preventDefault();
         const billId = document.getElementById('pay-bill-id').value;
         const amount = document.getElementById('pay-amount').value;
+        const searchType = container.querySelector('#bill-search-type');
+        const searchInput = container.querySelector('#bill-search-input');
         try {
             await api.post(`/bills/${billId}/pay`, { amount: parseFloat(amount) });
             alert('Payment recorded!');
             closePayModal();
-            loadBillsData(container, isAdmin, searchType.value, searchInput.value);
+            loadBillsData(
+                container, 
+                isAdmin, 
+                searchType ? searchType.value : 'ALL', 
+                searchInput ? searchInput.value : ''
+            );
         } catch (err) { alert('Error: ' + err.message); }
     });
+
+    // Các sự kiện dành riêng cho Nhân viên (Staff/Admin)
+    if (!isPatient) {
+        const btnGen = container.querySelector('#btn-generate-bill');
+        const modalGen = container.querySelector('#gen-bill-modal');
+        const closeGen = container.querySelector('#close-gen-bill-modal');
+        const cancelGen = container.querySelector('#btn-cancel-gen-bill');
+        
+        const searchType = container.querySelector('#bill-search-type');
+        const searchInput = container.querySelector('#bill-search-input');
+        const searchBtn = container.querySelector('#btn-bill-search');
+
+        // Search input toggle
+        searchType.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'ALL') {
+                searchInput.style.display = 'none';
+                searchBtn.style.display = 'none';
+                loadBillsData(container, isAdmin, 'ALL');
+            } else {
+                searchInput.style.display = 'block';
+                searchBtn.style.display = 'block';
+                searchInput.placeholder = val === 'PATIENT' ? 'Patient ID (e.g. PAT-123)...' : 'Admission ID...';
+            }
+        });
+
+        searchBtn.addEventListener('click', () => {
+            loadBillsData(container, isAdmin, searchType.value, searchInput.value);
+        });
+
+        if (btnGen) {
+            btnGen.onclick = () => {
+                modalGen.style.display = 'flex';
+            };
+        }
+
+        const closeGenModal = () => {
+            modalGen.style.display = 'none';
+            container.querySelector('#gen-bill-form').reset();
+        };
+        if (closeGen) closeGen.onclick = closeGenModal;
+        if (cancelGen) cancelGen.onclick = closeGenModal;
+
+        container.querySelector('#gen-bill-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const admId = document.getElementById('gen-admission-id').value;
+            try {
+                await api.post(`/bills/generate/${admId}`);
+                alert('Bill generated!');
+                closeGenModal();
+                loadBillsData(container, isAdmin, searchType.value, searchInput.value);
+            } catch (err) { alert('Error: ' + err.message); }
+        });
+    }
 
     if (isAdmin) {
         // Discount Modal
@@ -412,18 +418,16 @@ function setupBillingEvents(container, isAdmin) {
             e.preventDefault();
             const billId = document.getElementById('disc-bill-id').value;
             const percent = document.getElementById('disc-percent').value;
+            const searchType = container.querySelector('#bill-search-type');
+            const searchInput = container.querySelector('#bill-search-input');
             try {
                 await requestPatch(`/bills/${billId}/discount?percent=${percent}`);
                 alert('Discount applied!');
                 closeDiscountModal();
-                loadBillsData(container, isAdmin, searchType.value, searchInput.value);
+                loadBillsData(container, isAdmin, searchType ? searchType.value : 'ALL', searchInput ? searchInput.value : '');
             } catch (err) { alert('Error: ' + err.message); }
         });
     }
-
-    container.querySelector('#close-bill-modal').onclick = () => {
-        container.querySelector('#bill-modal').style.display = 'none';
-    };
 }
 
 async function requestPatch(endpoint) {
