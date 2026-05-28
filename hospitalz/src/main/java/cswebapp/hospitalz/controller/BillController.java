@@ -4,6 +4,8 @@ import cswebapp.hospitalz.model.Bill;
 import cswebapp.hospitalz.model.PaymentRequest;
 import cswebapp.hospitalz.service.BillService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,5 +62,18 @@ public class BillController {
     @GetMapping
     public ResponseEntity<List<Bill>> getAllBills() {
         return ResponseEntity.ok(billService.getAllBills());
+    }
+     @GetMapping("/{billId}/pdf")
+    public ResponseEntity<byte[]> downloadBillPdf(@PathVariable Long billId) {
+        byte[] pdfBytes = billService.generateBillPdf(billId);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "Bill_" + billId + ".pdf");
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
     }
 }

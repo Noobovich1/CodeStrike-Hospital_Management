@@ -281,8 +281,30 @@ async function showBillDetails(billId, container) {
             <p><strong>Status:</strong> ${bill.paymentStatus}</p>
         `;
         
-        container.querySelector('#btn-download-pdf').onclick = () => {
-            alert('PDF downloading is not fully implemented in the backend yet, but UI is ready! (Req 21)');
+        container.querySelector('#btn-download-pdf').onclick = async () => {
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const response = await fetch(`/api/v1/bills/${billId}/pdf`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Could not download PDF invoice');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Bill_${billId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Failed to generate PDF: ' + error.message);
+            }
         };
     } catch (e) {
         content.innerHTML = '<span style="color:red;">Error loading details</span>';
