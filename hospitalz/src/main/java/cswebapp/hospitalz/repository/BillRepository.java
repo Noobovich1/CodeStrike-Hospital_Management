@@ -26,4 +26,7 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
 
     @Query("SELECT COALESCE(SUM(b.paidAmount), 0) FROM Bill b")
     java.math.BigDecimal sumPaidAmount();
+
+    @Query("SELECT new map(b.generatedAt as generatedAt, b.totalAmount as totalAmount) FROM Bill b")
+    List<java.util.Map<String, Object>> findBillSummaryForChart();
 }

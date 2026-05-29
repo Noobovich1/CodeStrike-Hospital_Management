@@ -55,7 +55,7 @@ public class AdminController {
         stats.put("roomOccupancy", occupancyByType);
 
         // Bills for revenue chart
-        stats.put("bills", billRepository.findAll());
+        stats.put("bills", billRepository.findBillSummaryForChart());
 
         return ResponseEntity.ok(stats);
     }
