@@ -42,7 +42,9 @@ const roleConfig = {
     WARD_BOY: {
         name: 'Ward Boy',
         menu: [
-            { id: 'rooms', icon: 'fa-door-open', label: 'Room Status' }
+            { id: 'rooms', icon: 'fa-door-open', label: 'Room Status' },
+            { id: 'ward-patients', icon: 'fa-bed-pulse', label: 'Room Assignments' },
+            { id: 'transport-tasks', icon: 'fa-truck-medical', label: 'Transport Tasks' }
         ]
     },
     RECEPTIONIST: {
@@ -175,6 +177,10 @@ async function loadModule(moduleId, moduleTitle) {
             case 'my-records':
                 module = await import('./modules/records.js');
                 renderFunction = module.renderPatientRecords;
+                break;
+            case 'transport-tasks':
+                module = await import('./modules/transport.js');
+                renderFunction = module.renderTransportTasks;
                 break;
             // Add other module cases as they are implemented
             default:

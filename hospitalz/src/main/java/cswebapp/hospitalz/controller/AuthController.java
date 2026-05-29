@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -70,6 +71,18 @@ public class AuthController {
                 }
             } else if ("NURSE".equals(user.getRole().name()) || "WARD_BOY".equals(user.getRole().name())) {
                 Staff staff = staffRepository.findByUser_Id(user.getId()).orElse(null);
+                if (staff == null) {
+                    StaffRole targetRole = "NURSE".equals(user.getRole().name()) ? StaffRole.NURSE : StaffRole.WARD_BOY;
+                    List<Staff> staffList = staffRepository.findByRole(targetRole);
+                    for (Staff s : staffList) {
+                        if (s.getUser() == null) {
+                            s.setUser(user);
+                            staffRepository.save(s);
+                            staff = s;
+                            break;
+                        }
+                    }
+                }
                 if (staff != null) {
                     response.put("staffId", staff.getStaffId());
                     response.put("assignedWard", staff.getAssignedWard());

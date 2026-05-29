@@ -6,13 +6,14 @@ export async function renderActiveAdmissions() {
     const container = document.createElement('div');
     const role = getStorageItem('role') || '';
     const isNurse = role === 'NURSE';
+    const isWardBoy = role === 'WARD_BOY';
     const isReceptionist = role === 'RECEPTIONIST' || role === 'ADMIN';
     const assignedWard = getStorageItem('assignedWard') || '';
 
     container.innerHTML = `
         <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
-                <h2 style="margin: 0;">${isNurse ? 'Inpatient Management' : 'Admission & Bed Assignment'}</h2>
+                <h2 style="margin: 0;">${isWardBoy ? 'Room Assignments' : (isNurse ? 'Inpatient Management' : 'Admission & Bed Assignment')}</h2>
                 
                 <!-- Info of assigned ward for nurse -->
                 ${isNurse && assignedWard ? `
@@ -22,7 +23,7 @@ export async function renderActiveAdmissions() {
                 ` : ''}
 
                 <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                    ${!isNurse ? `
+                    ${isReceptionist ? `
                         <button id="btn-tab-active" class="btn active-tab" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary);">Active Treatments</button>
                         <button id="btn-tab-history" class="btn" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; background: transparent; color: var(--text-primary);">Admission History</button>
                         <button id="btn-admit-patient" class="btn btn-primary" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">
@@ -34,6 +35,11 @@ export async function renderActiveAdmissions() {
                     ` : `
                         <button id="btn-tab-active" class="btn active-tab" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary); display: none;">Active Treatments</button>
                     `}
+                    ${!isWardBoy ? `
+                        <button id="btn-request-transport" class="btn" style="padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; color: var(--text-primary);">
+                            <i class="fa-solid fa-truck-medical"></i> Request Transport
+                        </button>
+                    ` : ''}
                 </div>
             </div>
 
@@ -48,7 +54,7 @@ export async function renderActiveAdmissions() {
                                 <th style="padding: 12px;">Room</th>
                                 <th style="padding: 12px;">Admission Date</th>
                                 <th style="padding: 12px;">Status</th>
-                                <th style="padding: 12px;">Actions</th>
+                                ${!isWardBoy ? `<th style="padding: 12px;">Actions</th>` : ''}
                             </tr>
                         </thead>
                         <tbody id="admissions-table-body">
@@ -58,8 +64,8 @@ export async function renderActiveAdmissions() {
                 </div>
             </div>
 
-            <!-- Admission History Table (Hidden for Nurse) -->
-            ${!isNurse ? `
+            <!-- Admission History Table (Hidden for Nurse and Ward Boy) -->
+            ${isReceptionist ? `
                 <div id="section-history-admissions" style="display: none;">
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -84,7 +90,7 @@ export async function renderActiveAdmissions() {
         </div>
 
         <!-- Admit Modal (Receptionist only) -->
-        ${!isNurse ? `
+        ${isReceptionist ? `
             <div id="admit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
                 <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
@@ -233,12 +239,51 @@ export async function renderActiveAdmissions() {
                 </div>
             </div>
         </div>
+
+        <!-- Transport Modal (Nurses/Receptionists/Admins) -->
+        ${!isWardBoy ? `
+            <div id="transport-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+                <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                        <h3 style="margin: 0;"><i class="fa-solid fa-truck-medical"></i> Request Patient Transport</h3>
+                        <button id="close-transport-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
+                    </div>
+                    <form id="transport-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 4px;">Search Admitted Patient *</label>
+                                <input type="text" id="transport-patient-search" placeholder="Type name, ID or phone..." required
+                                    style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 4px; outline: none;">
+                                <select id="transport-patient-id" size="4" required
+                                    style="width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); display: none; outline: none;">
+                                </select>
+                                <small id="transport-patient-hint" style="color: var(--text-secondary); font-size: 0.8em;">Type at least 2 characters to search</small>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 4px;">Destination Room *</label>
+                                <select id="transport-room-select" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                                    <option value="">Loading rooms...</option>
+                                </select>
+                            </div>
+                            <div style="grid-column: span 2;">
+                                <label style="display: block; margin-bottom: 4px;">Transport Notes / Instructions</label>
+                                <input type="text" id="transport-notes" placeholder="e.g. Move to ICU for post-op monitoring, wheelchair needed" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                            <button type="button" id="btn-cancel-transport" style="padding: 8px 16px; border: 1px solid var(--border-color); background: transparent; border-radius: 6px; cursor: pointer; color: var(--text-primary);">Cancel</button>
+                            <button type="submit" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        ` : ''}
     `;
 
     // Load data and set up events
     setTimeout(() => {
         loadActiveAdmissions(container, isNurse, assignedWard);
-        if (!isNurse) {
+        if (isReceptionist) {
             loadHistoryAdmissions(container);
             loadAvailableRooms(container);
         }
@@ -266,10 +311,27 @@ async function loadAvailableRooms(container) {
     }
 }
 
+async function loadAllRoomsForTransport(container) {
+    const select = container.querySelector('#transport-room-select');
+    if (!select) return;
+    try {
+        const rooms = await api.get('/rooms');
+        select.innerHTML = '<option value="">Select destination room...</option>' +
+            rooms.map(r =>
+                `<option value="${r.roomId}">Room ${r.roomNumber} - ${r.roomType} (${r.notes || ''})</option>`
+            ).join('');
+    } catch (error) {
+        select.innerHTML = '<option value="">Error loading rooms</option>';
+    }
+}
+
 async function loadActiveAdmissions(container, isNurse, assignedWard) {
     const tbody = container.querySelector('#admissions-table-body');
     if (!tbody) return;
     try {
+        const role = getStorageItem('role') || '';
+        const isWardBoy = role === 'WARD_BOY';
+        const isReceptionist = role === 'RECEPTIONIST' || role === 'ADMIN';
         const admissions = await api.get('/admissions/active');
         
         // Filter by assigned ward for Nurse
@@ -287,7 +349,7 @@ async function loadActiveAdmissions(container, isNurse, assignedWard) {
         }
 
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">No active inpatient admissions.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="${isWardBoy ? 5 : 6}" style="text-align: center; padding: 20px; color: var(--text-secondary);">No active inpatient admissions.</td></tr>`;
             return;
         }
 
@@ -302,7 +364,7 @@ async function loadActiveAdmissions(container, isNurse, assignedWard) {
                         <i class="fa-solid fa-pills"></i> Execute Orders
                     </button>
                 `;
-            } else {
+            } else if (!isWardBoy) {
                 actionsHTML = `
                     <button class="btn btn-discharge" data-id="${a.admissionId}" style="padding: 6px 12px; background: var(--status-danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
                         Discharge & Bill
@@ -319,13 +381,13 @@ async function loadActiveAdmissions(container, isNurse, assignedWard) {
                     <td style="padding: 12px;">Room ${a.room?.roomNumber || '-'} (${a.room?.notes || '-'})</td>
                     <td style="padding: 12px;">${new Date(a.admissionDate).toLocaleString('en-US')}</td>
                     <td style="padding: 12px;"><span style="color: var(--status-success); font-weight: 600;"><i class="fa-solid fa-bed"></i> ${a.status}</span></td>
-                    <td style="padding: 12px;">${actionsHTML}</td>
+                    ${!isWardBoy ? `<td style="padding: 12px;">${actionsHTML}</td>` : ''}
                 </tr>
             `;
         }).join('');
 
         // Bind discharge action
-        if (!isNurse) {
+        if (!isNurse && !isWardBoy) {
             container.querySelectorAll('.btn-discharge').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const id = btn.dataset.id;
@@ -334,15 +396,17 @@ async function loadActiveAdmissions(container, isNurse, assignedWard) {
                             await api.put(`/admissions/${id}/discharge`);
                             alert('Patient discharged successfully!');
                             loadActiveAdmissions(container, isNurse, assignedWard);
-                            loadHistoryAdmissions(container);
-                            loadAvailableRooms(container);
+                            if (isReceptionist) {
+                                loadHistoryAdmissions(container);
+                                loadAvailableRooms(container);
+                            }
                         } catch (error) {
                             alert('Discharge error: ' + error.message);
                         }
                     }
                 });
             });
-        } else {
+        } else if (isNurse) {
             // Bind Nurse actions
             container.querySelectorAll('.btn-record-vitals').forEach(btn => {
                 btn.onclick = () => {
@@ -364,7 +428,7 @@ async function loadActiveAdmissions(container, isNurse, assignedWard) {
         }
 
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--status-danger);">Error loading inpatient data.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${isWardBoy ? 5 : 6}" style="text-align: center; padding: 20px; color: var(--status-danger);">Error loading inpatient data.</td></tr>`;
     }
 }
 
@@ -460,6 +524,10 @@ async function loadHistoryAdmissions(container) {
 }
 
 function setupAdmissionsEvents(container, isNurse, assignedWard) {
+    const role = getStorageItem('role') || '';
+    const isWardBoy = role === 'WARD_BOY';
+    if (isWardBoy) return;
+
     if (isNurse) {
         // Vitals modal setup
         const modal = container.querySelector('#vitals-modal');
@@ -775,4 +843,113 @@ function setupAdmissionsEvents(container, isNurse, assignedWard) {
             alert('Error: ' + err.message);
         }
     };
+
+    // Transport modal setup
+    const btnRequestTransport = container.querySelector('#btn-request-transport');
+    const transportModal = container.querySelector('#transport-modal');
+    if (btnRequestTransport && transportModal) {
+        const closeTransportBtn = container.querySelector('#close-transport-modal');
+        const cancelTransportBtn = container.querySelector('#btn-cancel-transport');
+        const transportForm = container.querySelector('#transport-form');
+        const searchInput = container.querySelector('#transport-patient-search');
+        const patientSelect = container.querySelector('#transport-patient-id');
+        const hint = container.querySelector('#transport-patient-hint');
+
+        const closeTransportModal = () => {
+            transportModal.style.display = 'none';
+            transportForm.reset();
+            searchInput.value = '';
+            patientSelect.style.display = 'none';
+            patientSelect.innerHTML = '';
+            hint.textContent = 'Type at least 2 characters to search';
+        };
+
+        if (closeTransportBtn) closeTransportBtn.onclick = closeTransportModal;
+        if (cancelTransportBtn) cancelTransportBtn.onclick = closeTransportModal;
+
+        let activeAdmissionsList = [];
+        btnRequestTransport.onclick = async () => {
+            transportModal.style.display = 'flex';
+            loadAllRoomsForTransport(container);
+
+            try {
+                activeAdmissionsList = await api.get('/admissions/active');
+            } catch (e) {
+                console.error('Failed to load active admissions', e);
+            }
+
+            searchInput.value = '';
+            patientSelect.style.display = 'none';
+            patientSelect.removeAttribute('required');
+            hint.textContent = 'Type at least 2 characters to search';
+        };
+
+        searchInput.oninput = () => {
+            const query = searchInput.value.toLowerCase().trim();
+            if (query.length < 2) {
+                patientSelect.style.display = 'none';
+                hint.textContent = 'Type at least 2 characters to search';
+                return;
+            }
+
+            const matches = activeAdmissionsList.filter(a =>
+                a.patient?.fullName?.toLowerCase().includes(query) ||
+                a.patient?.patientId?.toLowerCase().includes(query) ||
+                a.room?.roomNumber?.toLowerCase().includes(query)
+            );
+
+            if (matches.length === 0) {
+                patientSelect.style.display = 'none';
+                hint.textContent = `No admitted patients matching "${searchInput.value}"`;
+                return;
+            }
+
+            patientSelect.innerHTML = matches.map(a =>
+                `<option value="${a.patient.patientId}">[Room ${a.room?.roomNumber}] ${a.patient.fullName} (${a.patient.patientId})</option>`
+            ).join('');
+            patientSelect.style.display = 'block';
+            hint.textContent = `Found ${matches.length} results — click to select`;
+
+            if (matches.length === 1) {
+                patientSelect.selectedIndex = 0;
+                hint.textContent = `✓ Selected: ${matches[0].patient.fullName} (${matches[0].patient.patientId})`;
+            }
+        };
+
+        patientSelect.onchange = () => {
+            const selected = patientSelect.options[patientSelect.selectedIndex];
+            if (selected && selected.value) {
+                hint.textContent = `✓ Selected: ${selected.text}`;
+                searchInput.value = selected.text;
+            }
+        };
+
+        transportForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const patientId = patientSelect.value;
+            if (!patientId) {
+                alert('Please search and select an admitted patient first.');
+                searchInput.focus();
+                return;
+            }
+            const roomId = parseInt(container.querySelector('#transport-room-select').value, 10);
+            const notes = container.querySelector('#transport-notes').value;
+            const requestedBy = getStorageItem('username') || 'Staff';
+
+            const payload = {
+                patient: { patientId: patientId },
+                toRoom: { roomId: roomId },
+                notes: notes,
+                requestedBy: requestedBy
+            };
+
+            try {
+                await api.post('/transport-tasks', payload);
+                alert('Transport request submitted successfully!');
+                closeTransportModal();
+            } catch (err) {
+                alert('Error submitting transport request: ' + err.message);
+            }
+        };
+    }
 }

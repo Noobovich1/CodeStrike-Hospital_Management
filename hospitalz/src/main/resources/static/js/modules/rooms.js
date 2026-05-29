@@ -119,9 +119,19 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
     if (!tbody) return;
 
     try {
-        const roomList = await api.get('/rooms');
+        const [roomList, activeAdmissions] = await Promise.all([
+            api.get('/rooms'),
+            api.get('/admissions/active').catch(() => [])
+        ]);
+
+        const getRoomOccupants = (roomId) => {
+            return activeAdmissions
+                .filter(a => a.room?.roomId === roomId)
+                .map(a => `${a.patient?.fullName || '-'} (${a.patient?.patientId || '-'})`)
+                .join(', ');
+        };
         
-        const filteredList = statusFilter === 'ALL' 
+        let filteredList = statusFilter === 'ALL' 
             ? roomList 
             : roomList.filter(r => r.status === statusFilter);
 
@@ -179,6 +189,9 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <progress value="${r.currentOccupancy}" max="${r.capacity}" style="width: 60px; height: 8px; border-radius: 4px;"></progress>
                         <span>${r.currentOccupancy} / ${r.capacity}</span>
+                        ${r.currentOccupancy > 0 ? `
+                            <i class="fa-solid fa-users btn-view-occupants" style="color: var(--accent-primary); cursor: pointer;" title="Show patients" data-occupants="${getRoomOccupants(r.roomId)}" data-room="${r.roomNumber}"></i>
+                        ` : ''}
                     </div>
                 </td>
                 ${!isWardBoy ? `<td style="padding: 12px; font-weight: 600; color: var(--accent-primary);">$${r.dailyRate}</td>` : ''}
@@ -186,6 +199,15 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                 <td style="padding: 12px;">${actionButtons}</td>
             </tr>
         `}).join('');
+
+        // Attach listener for viewing occupants
+        document.querySelectorAll('.btn-view-occupants').forEach(icon => {
+            icon.onclick = (e) => {
+                const roomNum = e.currentTarget.dataset.room;
+                const occupants = e.currentTarget.dataset.occupants;
+                alert(`Patients in Room ${roomNum}:\n${occupants}`);
+            };
+        });
 
         // Attach listeners safely
         if (isWardBoy) {
