@@ -97,7 +97,7 @@ export async function renderUsersList() {
                     loadUsers(container);
                 };
             } catch (err) {
-                alert('Error creating receptionist: ' + err.message);
+                showToast('Error creating receptionist: ' + err.message, 'error');
             }
         };
     }, 0);
@@ -156,7 +156,7 @@ async function loadUsers(container) {
                     await api.patch(`/users/${btn.dataset.id}/status`, { active: false });
                     loadUsers(container);
                 } catch (err) {
-                    alert('Error locking account: ' + err.message);
+                    showToast('Error locking account: ' + err.message, 'error');
                 }
             };
         });
@@ -168,7 +168,7 @@ async function loadUsers(container) {
                     await api.patch(`/users/${btn.dataset.id}/status`, { active: true });
                     loadUsers(container);
                 } catch (err) {
-                    alert('Error unlocking account: ' + err.message);
+                    showToast('Error unlocking account: ' + err.message, 'error');
                 }
             };
         });

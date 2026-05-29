@@ -238,14 +238,14 @@ async function loadMasterTreatments(container) {
             try {
               if (isActive) {
                 await api.delete(`/treatments/${treatmentId}`);
-                alert("Treatment deactivated successfully!");
+                showToast("Treatment deactivated successfully!", "success");
               } else {
                 await api.post(`/treatments/${treatmentId}/activate`);
-                alert("Treatment activated successfully!");
+                showToast("Treatment activated successfully!", "success");
               }
               loadMasterTreatments(container);
             } catch (error) {
-              alert("Error updating treatment status: " + error.message);
+              showToast("Error updating treatment status: " + error.message, "error");
             }
           }
         };
@@ -271,7 +271,7 @@ async function openEditTreatmentForm(treatmentId) {
     document.getElementById("treatment-description").value =
       t.description || "";
   } catch (error) {
-    alert("Error loading treatment details: " + error.message);
+    showToast("Error loading treatment details: " + error.message, "error");
     modal.style.display = "none";
   }
 }
@@ -534,12 +534,12 @@ function setupTreatmentsEvents(container) {
     const doctorId = prescDoctorId.value;
 
     if (!patientId) {
-      alert('Please search and select a patient first.');
+      showToast('Please search and select a patient first.', 'warning');
       prescPatientSearch.focus();
       return;
     }
     if (!doctorId) {
-      alert('Please search and select a doctor first.');
+      showToast('Please search and select a doctor first.', 'warning');
       prescDoctorSearch.focus();
       return;
     }
@@ -557,14 +557,14 @@ function setupTreatmentsEvents(container) {
 
     try {
       await api.post("/treatment-records", payload);
-      alert("Treatment prescribed successfully!");
+      showToast("Treatment prescribed successfully!", "success");
       closePrescModal();
       // Refresh search list if the user has queried
       if (searchIdInput.value.trim() !== "") {
         searchBtn.click();
       }
     } catch (error) {
-      alert("Error: " + error.message);
+      showToast("Error: " + error.message, "error");
     }
   });
 
@@ -597,15 +597,15 @@ function setupTreatmentsEvents(container) {
     try {
       if (treatmentId) {
         await api.put(`/treatments/${treatmentId}`, payload);
-        alert("Treatment updated successfully!");
+        showToast("Treatment updated successfully!", "success");
       } else {
         await api.post("/treatments", payload);
-        alert("Treatment created successfully!");
+        showToast("Treatment created successfully!", "success");
       }
       closeTreatModal();
       loadMasterTreatments(container);
     } catch (error) {
-      alert("Error: " + error.message);
+      showToast("Error: " + error.message, "error");
     }
   });
 
@@ -613,7 +613,7 @@ function setupTreatmentsEvents(container) {
   searchBtn.addEventListener("click", async () => {
     const queryVal = searchIdInput.value.trim();
     if (queryVal === "") {
-      alert("Please search and select a patient or doctor first.");
+      showToast("Please search and select a patient or doctor first.", "warning");
       if (prescSearchTerm) prescSearchTerm.focus();
       return;
     }

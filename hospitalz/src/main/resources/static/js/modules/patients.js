@@ -200,13 +200,13 @@ function setupPatientEvents(container, getAllPatientsFn) {
 
     try {
       await api.post("/patients", payload);
-      alert("Patient registered successfully!");
+      showToast("Patient registered successfully!", "success");
       closeRegModal();
       const updated = await loadPatientData();
       renderPatientTable(updated, container);
       searchInput.value = "";
     } catch (error) {
-      alert("Error: " + error.message);
+      showToast("Error: " + error.message, "error");
     }
   });
 
@@ -493,7 +493,7 @@ export async function renderDoctorPatientList() {
         await loadActiveTreatmentsDropdown();
 
       } catch (err) {
-        alert("Error loading patient details: " + err.message);
+        showToast("Error loading patient details: " + err.message, "error");
       }
     }
 
@@ -545,11 +545,11 @@ export async function renderDoctorPatientList() {
 
       try {
         await api.patch(`/patients/${patientId}/clinical`, payload);
-        alert("Diagnosis updated successfully!");
+        showToast("Diagnosis updated successfully!", "success");
         // Refresh doctor's patients list
         await loadDoctorPatients();
       } catch (err) {
-        alert("Error saving clinical info: " + err.message);
+        showToast("Error saving clinical info: " + err.message, "error");
       }
     };
 
@@ -562,7 +562,7 @@ export async function renderDoctorPatientList() {
       const notes = container.querySelector("#doc-presc-notes").value;
 
       if (!treatmentId) {
-        alert("Please select a treatment service.");
+        showToast("Please select a treatment service.", "warning");
         return;
       }
 
@@ -576,13 +576,13 @@ export async function renderDoctorPatientList() {
 
       try {
         await api.post("/treatment-records", payload);
-        alert("Prescription/order submitted successfully!");
+        showToast("Prescription/order submitted successfully!", "success");
         prescribeForm.reset();
         container.querySelector("#doc-presc-qty").value = 1;
         // Refresh history
         await loadTreatmentHistory(patientId);
       } catch (err) {
-        alert("Error submitting order: " + err.message);
+        showToast("Error submitting order: " + err.message, "error");
       }
     };
 

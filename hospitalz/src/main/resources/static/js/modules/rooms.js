@@ -205,7 +205,7 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
             icon.onclick = (e) => {
                 const roomNum = e.currentTarget.dataset.room;
                 const occupants = e.currentTarget.dataset.occupants;
-                alert(`Patients in Room ${roomNum}:\n${occupants}`);
+                showToast(`Patients in Room ${roomNum}:\n${occupants}`, 'info');
             };
         });
 
@@ -217,11 +217,11 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                     if (confirm('Confirm this room has been cleaned and is ready for patients?')) {
                         try {
                             await api.patch(`/rooms/${roomId}/status?status=AVAILABLE`);
-                            alert('Room status updated to AVAILABLE!');
+                            showToast('Room status updated to AVAILABLE!', 'success');
                             const filter = document.getElementById('room-status-filter').value;
                             loadRoomData(filter, isWardBoy, isAdmin);
                         } catch (error) {
-                            alert('Update error: ' + error.message);
+                            showToast('Update error: ' + error.message, 'error');
                         }
                     }
                 };
@@ -244,11 +244,11 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                     
                     try {
                         await api.patch(`/rooms/${roomId}/status?status=${newStatus}`);
-                        alert(newStatus === 'MAINTENANCE' ? 'Room marked for cleaning!' : 'Room is ready!');
+                        showToast(newStatus === 'MAINTENANCE' ? 'Room marked for cleaning!' : 'Room is ready!', 'success');
                         const filter = document.getElementById('room-status-filter').value;
                         loadRoomData(filter, isWardBoy, isAdmin);
                     } catch (error) {
-                        alert('Update error: ' + error.message);
+                        showToast('Update error: ' + error.message, 'error');
                     }
                 };
             });
@@ -276,7 +276,7 @@ async function openEditRoomForm(roomId) {
         document.getElementById('room-rate').value = room.dailyRate;
         document.getElementById('room-notes').value = room.notes || '';
     } catch (error) {
-        alert('Error loading room info: ' + error.message);
+        showToast('Error loading room info: ' + error.message, 'error');
         modal.style.display = 'none';
     }
 }
@@ -329,15 +329,15 @@ function setupRoomEvents(container, isWardBoy, isAdmin) {
         try {
             if (roomId) {
                 await api.put(`/rooms/${roomId}`, payload);
-                alert('Room updated successfully!');
+                showToast('Room updated successfully!', 'success');
             } else {
                 await api.post('/rooms', payload);
-                alert('Room created successfully!');
+                showToast('Room created successfully!', 'success');
             }
             closeModal();
             loadRoomData(filterSelect.value, isWardBoy, isAdmin);
         } catch (error) {
-            alert('Error: ' + error.message);
+            showToast('Error: ' + error.message, 'error');
         }
     });
 }

@@ -244,10 +244,10 @@ async function loadStaffData(container) {
                 if (confirm(`Are you sure you want to deactivate staff ID ${staffId}?`)) {
                     try {
                         await api.delete(`/staff/${staffId}`);
-                        alert('Staff deactivated successfully!');
+                        showToast('Staff deactivated successfully!', 'success');
                         loadStaffData();
                     } catch (error) {
-                        alert('Error deactivating staff: ' + error.message);
+                        showToast('Error deactivating staff: ' + error.message, 'error');
                     }
                 }
             };
@@ -304,10 +304,10 @@ async function loadDoctorData(container) {
                 if (confirm(`Are you sure you want to deactivate doctor ID ${doctorId}?`)) {
                     try {
                         await api.delete(`/doctors/${doctorId}`);
-                        alert('Doctor deactivated successfully!');
+                        showToast('Doctor deactivated successfully!', 'success');
                         loadDoctorData();
                     } catch (error) {
-                        alert('Error deactivating doctor: ' + error.message);
+                        showToast('Error deactivating doctor: ' + error.message, 'error');
                     }
                 }
             };
@@ -334,7 +334,7 @@ async function openEditStaffForm(staffId) {
         document.getElementById('staff-shift').value = staff.shift || 'MORNING';
         document.getElementById('staff-ward').value = staff.assignedWard || '';
     } catch (error) {
-        alert('Error loading staff details: ' + error.message);
+        showToast('Error loading staff details: ' + error.message, 'error');
         modal.style.display = 'none';
     }
 }
@@ -356,7 +356,7 @@ async function openEditDocForm(doctorId) {
         document.getElementById('doc-exp').value = doctor.experienceYears || '';
         document.getElementById('doc-fee').value = doctor.consultationFee;
     } catch (error) {
-        alert('Error loading doctor details: ' + error.message);
+        showToast('Error loading doctor details: ' + error.message, 'error');
         modal.style.display = 'none';
     }
 }
@@ -416,7 +416,7 @@ function setupEvents(container) {
         try {
             if (staffId) {
                 await api.put(`/staff/${staffId}`, payload);
-                alert('Staff details updated!');
+                showToast('Staff details updated!', 'success');
                 closeStaff();
                 loadStaffData(container);
             } else {
@@ -434,7 +434,7 @@ function setupEvents(container) {
                 };
             }
         } catch (error) { 
-            alert('Error: ' + error.message); 
+            showToast('Error: ' + error.message, 'error'); 
         }
     };
 
@@ -473,7 +473,7 @@ function setupEvents(container) {
         try {
             if (doctorId) {
                 await api.put(`/doctors/${doctorId}`, payload);
-                alert('Doctor details updated!');
+                showToast('Doctor details updated!', 'success');
                 closeDoctor();
                 loadDoctorData(container);
             } else {
@@ -491,7 +491,7 @@ function setupEvents(container) {
                 };
             }
         } catch (error) { 
-            alert('Error: ' + error.message); 
+            showToast('Error: ' + error.message, 'error'); 
         }
     };
 }

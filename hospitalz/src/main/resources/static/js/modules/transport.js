@@ -132,10 +132,10 @@ async function loadTransportData(container, isWardBoy, staffId) {
                     if (confirm('Do you want to accept this transport task?')) {
                         try {
                             await api.patch(`/transport-tasks/${id}/status?status=ACCEPTED&staffId=${staffId}`);
-                            alert('Task accepted successfully!');
+                            showToast('Task accepted successfully!', 'success');
                             loadTransportData(container, isWardBoy, staffId);
                         } catch (err) {
-                            alert('Error: ' + err.message);
+                            showToast('Error: ' + err.message, 'error');
                         }
                     }
                 };
@@ -146,10 +146,10 @@ async function loadTransportData(container, isWardBoy, staffId) {
                     const id = e.currentTarget.dataset.id;
                     try {
                         await api.patch(`/transport-tasks/${id}/status?status=IN_PROGRESS`);
-                        alert('Patient transport started!');
+                        showToast('Patient transport started!', 'success');
                         loadTransportData(container, isWardBoy, staffId);
                     } catch (err) {
-                        alert('Error: ' + err.message);
+                        showToast('Error: ' + err.message, 'error');
                     }
                 };
             });
@@ -160,10 +160,10 @@ async function loadTransportData(container, isWardBoy, staffId) {
                     if (confirm('Confirm patient has been safely transported to destination room?')) {
                         try {
                             await api.patch(`/transport-tasks/${id}/status?status=COMPLETED`);
-                            alert('Patient transport completed successfully!');
+                            showToast('Patient transport completed successfully!', 'success');
                             loadTransportData(container, isWardBoy, staffId);
                         } catch (err) {
-                            alert('Error: ' + err.message);
+                            showToast('Error: ' + err.message, 'error');
                         }
                     }
                 };

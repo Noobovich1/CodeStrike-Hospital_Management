@@ -1,4 +1,5 @@
 // app.js - Main Application Logic
+import './modules/notifications.js';
 import { initSettingsModal } from './modules/settings.js';
 
 const sidebarNav = document.getElementById('sidebar-nav');
