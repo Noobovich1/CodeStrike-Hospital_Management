@@ -93,7 +93,6 @@ export async function renderStaffList() {
                             <label style="display: block; margin-bottom: 4px;">Role *</label>
                             <select id="staff-role" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
                                 <option value="NURSE">Nurse</option>
-                                <option value="RECEPTIONIST">Receptionist</option>
                                 <option value="WARD_BOY">Ward Boy</option>
                             </select>
                         </div>
@@ -160,12 +159,39 @@ export async function renderStaffList() {
                 </form>
             </div>
         </div>
+
+        <!-- Credentials Modal (sau khi tạo Staff/Doctor thành công) -->
+        <div id="staff-credentials-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+            <div class="glass-panel" style="padding: 32px; max-width: 400px; width: 90%; text-align: center;">
+                <i class="fa-solid fa-circle-check" style="font-size: 2.5rem; color: var(--status-success); margin-bottom: 16px;"></i>
+                <h3 id="cred-modal-title" style="margin-bottom: 16px;">Account Created</h3>
+                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 0.85em;">USERNAME</span><br>
+                        <strong id="staff-cred-username" style="font-size: 1.1em; font-family: monospace;"></strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.85em;">DEFAULT PASSWORD</span><br>
+                        <strong id="staff-cred-password" style="font-size: 1.1em; font-family: monospace;"></strong>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 20px;">
+                    Share these credentials. They can change their password after first login.
+                </p>
+                <button id="staff-cred-close" style="padding: 10px 24px; background: var(--accent-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Done</button>
+            </div>
+        </div>
     `;
 
     setTimeout(() => {
         loadStaffData(container);
         loadDoctorData(container);
         setupEvents(container);
+
+        // Credentials modal close button
+        container.querySelector('#staff-cred-close').onclick = () => {
+            container.querySelector('#staff-credentials-modal').style.display = 'none';
+        };
     }, 0);
 
     return container;
@@ -218,10 +244,10 @@ async function loadStaffData(container) {
                 if (confirm(`Are you sure you want to deactivate staff ID ${staffId}?`)) {
                     try {
                         await api.delete(`/staff/${staffId}`);
-                        alert('Staff deactivated successfully!');
+                        showToast('Staff deactivated successfully!', 'success');
                         loadStaffData();
                     } catch (error) {
-                        alert('Error deactivating staff: ' + error.message);
+                        showToast('Error deactivating staff: ' + error.message, 'error');
                     }
                 }
             };
@@ -278,10 +304,10 @@ async function loadDoctorData(container) {
                 if (confirm(`Are you sure you want to deactivate doctor ID ${doctorId}?`)) {
                     try {
                         await api.delete(`/doctors/${doctorId}`);
-                        alert('Doctor deactivated successfully!');
+                        showToast('Doctor deactivated successfully!', 'success');
                         loadDoctorData();
                     } catch (error) {
-                        alert('Error deactivating doctor: ' + error.message);
+                        showToast('Error deactivating doctor: ' + error.message, 'error');
                     }
                 }
             };
@@ -308,7 +334,7 @@ async function openEditStaffForm(staffId) {
         document.getElementById('staff-shift').value = staff.shift || 'MORNING';
         document.getElementById('staff-ward').value = staff.assignedWard || '';
     } catch (error) {
-        alert('Error loading staff details: ' + error.message);
+        showToast('Error loading staff details: ' + error.message, 'error');
         modal.style.display = 'none';
     }
 }
@@ -330,7 +356,7 @@ async function openEditDocForm(doctorId) {
         document.getElementById('doc-exp').value = doctor.experienceYears || '';
         document.getElementById('doc-fee').value = doctor.consultationFee;
     } catch (error) {
-        alert('Error loading doctor details: ' + error.message);
+        showToast('Error loading doctor details: ' + error.message, 'error');
         modal.style.display = 'none';
     }
 }
@@ -390,15 +416,25 @@ function setupEvents(container) {
         try {
             if (staffId) {
                 await api.put(`/staff/${staffId}`, payload);
-                alert('Staff details updated!');
+                showToast('Staff details updated!', 'success');
+                closeStaff();
+                loadStaffData(container);
             } else {
-                await api.post('/staff', payload);
-                alert('Staff registered!');
+                const result = await api.post('/staff', payload);
+                closeStaff();
+                // Hiển thị credentials modal
+                const credsModal = container.querySelector('#staff-credentials-modal');
+                container.querySelector('#cred-modal-title').textContent = 'Staff Account Created';
+                container.querySelector('#staff-cred-username').textContent = result.username || '—';
+                container.querySelector('#staff-cred-password').textContent = result.defaultPassword || 'Pass1234';
+                credsModal.style.display = 'flex';
+                container.querySelector('#staff-cred-close').onclick = () => {
+                    credsModal.style.display = 'none';
+                    loadStaffData(container);
+                };
             }
-            closeStaff();
-            loadStaffData();
         } catch (error) { 
-            alert('Error: ' + error.message); 
+            showToast('Error: ' + error.message, 'error'); 
         }
     };
 
@@ -437,15 +473,25 @@ function setupEvents(container) {
         try {
             if (doctorId) {
                 await api.put(`/doctors/${doctorId}`, payload);
-                alert('Doctor details updated!');
+                showToast('Doctor details updated!', 'success');
+                closeDoctor();
+                loadDoctorData(container);
             } else {
-                await api.post('/doctors', payload);
-                alert('Doctor registered!');
+                const result = await api.post('/doctors', payload);
+                closeDoctor();
+                // Hiển thị credentials modal
+                const credsModal = container.querySelector('#staff-credentials-modal');
+                container.querySelector('#cred-modal-title').textContent = 'Doctor Account Created';
+                container.querySelector('#staff-cred-username').textContent = result.username || '—';
+                container.querySelector('#staff-cred-password').textContent = result.defaultPassword || 'Pass1234';
+                credsModal.style.display = 'flex';
+                container.querySelector('#staff-cred-close').onclick = () => {
+                    credsModal.style.display = 'none';
+                    loadDoctorData(container);
+                };
             }
-            closeDoctor();
-            loadDoctorData();
         } catch (error) { 
-            alert('Error: ' + error.message); 
+            showToast('Error: ' + error.message, 'error'); 
         }
     };
 }

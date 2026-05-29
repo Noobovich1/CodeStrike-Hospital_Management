@@ -44,4 +44,14 @@ public class Staff {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
     private User user;
+
+    @PrePersist
+    @PreUpdate
+    private void validateFields() {
+        if (phoneNumber != null) {
+            if (!phoneNumber.matches("^[+]?[0-9]{8,15}$")) {
+                throw new IllegalArgumentException("Invalid phone number format: " + phoneNumber);
+            }
+        }
+    }
 }

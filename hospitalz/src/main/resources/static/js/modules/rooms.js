@@ -119,9 +119,19 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
     if (!tbody) return;
 
     try {
-        const roomList = await api.get('/rooms');
+        const [roomList, activeAdmissions] = await Promise.all([
+            api.get('/rooms'),
+            api.get('/admissions/active').catch(() => [])
+        ]);
+
+        const getRoomOccupants = (roomId) => {
+            return activeAdmissions
+                .filter(a => a.room?.roomId === roomId)
+                .map(a => `${a.patient?.fullName || '-'} (${a.patient?.patientId || '-'})`)
+                .join(', ');
+        };
         
-        const filteredList = statusFilter === 'ALL' 
+        let filteredList = statusFilter === 'ALL' 
             ? roomList 
             : roomList.filter(r => r.status === statusFilter);
 
@@ -179,6 +189,9 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <progress value="${r.currentOccupancy}" max="${r.capacity}" style="width: 60px; height: 8px; border-radius: 4px;"></progress>
                         <span>${r.currentOccupancy} / ${r.capacity}</span>
+                        ${r.currentOccupancy > 0 ? `
+                            <i class="fa-solid fa-users btn-view-occupants" style="color: var(--accent-primary); cursor: pointer;" title="Show patients" data-occupants="${getRoomOccupants(r.roomId)}" data-room="${r.roomNumber}"></i>
+                        ` : ''}
                     </div>
                 </td>
                 ${!isWardBoy ? `<td style="padding: 12px; font-weight: 600; color: var(--accent-primary);">$${r.dailyRate}</td>` : ''}
@@ -186,6 +199,15 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                 <td style="padding: 12px;">${actionButtons}</td>
             </tr>
         `}).join('');
+
+        // Attach listener for viewing occupants
+        document.querySelectorAll('.btn-view-occupants').forEach(icon => {
+            icon.onclick = (e) => {
+                const roomNum = e.currentTarget.dataset.room;
+                const occupants = e.currentTarget.dataset.occupants;
+                showToast(`Patients in Room ${roomNum}:\n${occupants}`, 'info');
+            };
+        });
 
         // Attach listeners safely
         if (isWardBoy) {
@@ -195,11 +217,11 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                     if (confirm('Confirm this room has been cleaned and is ready for patients?')) {
                         try {
                             await api.patch(`/rooms/${roomId}/status?status=AVAILABLE`);
-                            alert('Room status updated to AVAILABLE!');
+                            showToast('Room status updated to AVAILABLE!', 'success');
                             const filter = document.getElementById('room-status-filter').value;
                             loadRoomData(filter, isWardBoy, isAdmin);
                         } catch (error) {
-                            alert('Update error: ' + error.message);
+                            showToast('Update error: ' + error.message, 'error');
                         }
                     }
                 };
@@ -222,11 +244,11 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                     
                     try {
                         await api.patch(`/rooms/${roomId}/status?status=${newStatus}`);
-                        alert(newStatus === 'MAINTENANCE' ? 'Room marked for cleaning!' : 'Room is ready!');
+                        showToast(newStatus === 'MAINTENANCE' ? 'Room marked for cleaning!' : 'Room is ready!', 'success');
                         const filter = document.getElementById('room-status-filter').value;
                         loadRoomData(filter, isWardBoy, isAdmin);
                     } catch (error) {
-                        alert('Update error: ' + error.message);
+                        showToast('Update error: ' + error.message, 'error');
                     }
                 };
             });
@@ -254,7 +276,7 @@ async function openEditRoomForm(roomId) {
         document.getElementById('room-rate').value = room.dailyRate;
         document.getElementById('room-notes').value = room.notes || '';
     } catch (error) {
-        alert('Error loading room info: ' + error.message);
+        showToast('Error loading room info: ' + error.message, 'error');
         modal.style.display = 'none';
     }
 }
@@ -307,15 +329,15 @@ function setupRoomEvents(container, isWardBoy, isAdmin) {
         try {
             if (roomId) {
                 await api.put(`/rooms/${roomId}`, payload);
-                alert('Room updated successfully!');
+                showToast('Room updated successfully!', 'success');
             } else {
                 await api.post('/rooms', payload);
-                alert('Room created successfully!');
+                showToast('Room created successfully!', 'success');
             }
             closeModal();
             loadRoomData(filterSelect.value, isWardBoy, isAdmin);
         } catch (error) {
-            alert('Error: ' + error.message);
+            showToast('Error: ' + error.message, 'error');
         }
     });
 }

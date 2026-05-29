@@ -44,7 +44,7 @@ public class TreatmentRecord {
     // Cost snapshot at time of record — important so bill isn't affected
     // if unit_cost changes later in the treatments master table
     @Column(name = "unit_cost_snapshot", nullable = false)
-    private Double unitCostSnapshot;
+    private java.math.BigDecimal unitCostSnapshot;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

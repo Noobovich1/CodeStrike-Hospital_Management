@@ -18,15 +18,14 @@ public interface TreatmentRecordRepository extends JpaRepository<TreatmentRecord
     // All records for a specific doctor
     List<TreatmentRecord> findByDoctor_DoctorId(String doctorId);
 
-    // Sum of (unit_cost_snapshot * quantity) for a patient — used in billing
     @Query("SELECT COALESCE(SUM(tr.unitCostSnapshot * tr.quantity), 0) " +
            "FROM TreatmentRecord tr WHERE tr.patient.patientId = :patientId")
-    Double sumTreatmentCostByPatient(String patientId);
+    java.math.BigDecimal sumTreatmentCostByPatient(String patientId);
 
     @Query("SELECT COALESCE(SUM(tr.unitCostSnapshot * tr.quantity), 0) " +
            "FROM TreatmentRecord tr WHERE tr.patient.patientId = :patientId " +
            "AND tr.sessionDate >= :startDate AND tr.sessionDate <= :endDate")
-    Double sumTreatmentCostByPatientAndDateRange(
+    java.math.BigDecimal sumTreatmentCostByPatientAndDateRange(
         @Param("patientId") String patientId,
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate

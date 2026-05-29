@@ -45,9 +45,9 @@ INSERT INTO doctors (doctor_id, user_id, full_name, specialisation, phone_number
 -- ── 3. STAFF ────────────────────────────────────────────────
 -- Role ordinal: 0 = NURSE, 1 = WARD_BOY
 -- Shift ordinal: 0 = MORNING, 1 = AFTERNOON, 2 = NIGHT
-INSERT INTO staff (staff_id, full_name, role, phone_number, assigned_ward, shift, is_active, created_at) VALUES
-('NRS-2024-0001', 'Nurse Mai', 0, '0912345678', 'Medical Ward', 0, 1, NOW()),
-('WRD-2024-0001', 'Wardboy Hoa', 1, '0913456789', 'Emergency Room', 1, 1, NOW());
+INSERT INTO staff (staff_id, user_id, full_name, role, phone_number, assigned_ward, shift, is_active, created_at) VALUES
+('NRS-2024-0001', 6, 'Nurse Mai', 0, '0912345678', 'Medical Ward', 0, 1, NOW()),
+('WRD-2024-0001', 7, 'Wardboy Hoa', 1, '0913456789', 'Emergency Room', 1, 1, NOW());
 
 -- ── 4. ROOMS ────────────────────────────────────────────────
 -- RoomType ordinal: 0 = GENERAL, 1 = ICU, 2 = OPERATION_THEATER

@@ -1,12 +1,14 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
+import cswebapp.hospitalz.dto.PatientProfileUpdateRequest;
 import cswebapp.hospitalz.model.Patient;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.UserRepository;
 import cswebapp.hospitalz.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,26 +31,38 @@ public class PatientController {
     private JwtService jwtService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public Patient registerPatient(@RequestBody Patient patient) {
         return patientService.registerNewPatient(patient);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE')")
     public List<Patient> getAllPatients() {
         return patientService.getAllPatients();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Patient> getPatientById(@PathVariable String id) {
-        return ResponseEntity.ok(patientService.getPatientById(id));
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'WARD_BOY', 'PATIENT')")
+    public ResponseEntity<?> getPatientById(@PathVariable String id, java.security.Principal principal) {
+        Patient patient = patientService.getPatientById(id);
+        boolean isPatient = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"));
+        if (isPatient) {
+            if (patient.getUser() == null || !patient.getUser().getUsername().equals(principal.getName())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: You cannot access other patients' profiles"));
+            }
+        }
+        return ResponseEntity.ok(patient);
     }
 
     // Patient cập nhật hồ sơ của chính mình
     @PatchMapping("/me")
+    @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<?> updateCurrentPatientProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody PatientProfileUpdateRequest request) {
-        
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No token provided"));
         }
@@ -98,13 +112,16 @@ public class PatientController {
         try {
             dob = java.time.LocalDate.parse(request.getDateOfBirth());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid Date of Birth format (should be YYYY-MM-DD)"));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid Date of Birth format (should be YYYY-MM-DD)"));
         }
 
         // Kiểm tra trùng số điện thoại với người khác
         if (!request.getPhoneNumber().equals(patient.getPhoneNumber())) {
-            if (patientRepository.existsByPhoneNumberAndPatientIdNot(request.getPhoneNumber(), patient.getPatientId())) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Phone number is already registered by another patient"));
+            if (patientRepository.existsByPhoneNumberAndPatientIdNot(request.getPhoneNumber(),
+                    patient.getPatientId())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Phone number is already registered by another patient"));
             }
         }
 
@@ -113,16 +130,26 @@ public class PatientController {
         patient.setDateOfBirth(dob);
         patient.setGender(genderEnum);
         patient.setPhoneNumber(request.getPhoneNumber().trim());
-        patient.setEmail(request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail().trim() : null);
-        patient.setAddress(request.getAddress() != null && !request.getAddress().trim().isEmpty() ? request.getAddress().trim() : null);
-        patient.setEmergencyContactName(request.getEmergencyContactName() != null && !request.getEmergencyContactName().trim().isEmpty() ? request.getEmergencyContactName().trim() : null);
-        patient.setEmergencyContactPhone(request.getEmergencyContactPhone() != null && !request.getEmergencyContactPhone().trim().isEmpty() ? request.getEmergencyContactPhone().trim() : null);
+        patient.setEmail(
+                request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail().trim() : null);
+        patient.setAddress(
+                request.getAddress() != null && !request.getAddress().trim().isEmpty() ? request.getAddress().trim()
+                        : null);
+        patient.setEmergencyContactName(
+                request.getEmergencyContactName() != null && !request.getEmergencyContactName().trim().isEmpty()
+                        ? request.getEmergencyContactName().trim()
+                        : null);
+        patient.setEmergencyContactPhone(
+                request.getEmergencyContactPhone() != null && !request.getEmergencyContactPhone().trim().isEmpty()
+                        ? request.getEmergencyContactPhone().trim()
+                        : null);
 
         Patient savedPatient = patientRepository.save(patient);
         return ResponseEntity.ok(savedPatient);
     }
 
     @PatchMapping("/{id}/clinical")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
     public ResponseEntity<Patient> updateClinicalDetails(
             @PathVariable String id,
             @RequestBody Map<String, String> payload) {

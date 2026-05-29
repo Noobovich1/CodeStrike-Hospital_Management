@@ -332,7 +332,7 @@ async function showBillDetails(billId, container) {
                 a.remove();
                 window.URL.revokeObjectURL(url);
             } catch (error) {
-                alert('Failed to generate PDF: ' + error.message);
+                showToast('Failed to generate PDF: ' + error.message, 'error');
             }
         };
     } catch (e) {
@@ -367,7 +367,7 @@ function setupBillingEvents(container, isAdmin) {
         const searchInput = container.querySelector('#bill-search-input');
         try {
             await api.post(`/bills/${billId}/pay`, { amount: parseFloat(amount) });
-            alert('Payment recorded!');
+            showToast('Payment recorded!', 'success');
             closePayModal();
             loadBillsData(
                 container, 
@@ -375,7 +375,7 @@ function setupBillingEvents(container, isAdmin) {
                 searchType ? searchType.value : 'ALL', 
                 searchInput ? searchInput.value : ''
             );
-        } catch (err) { alert('Error: ' + err.message); }
+        } catch (err) { showToast('Error: ' + err.message, 'error'); }
     });
 
     // Các sự kiện dành riêng cho Nhân viên (Staff/Admin)
@@ -565,12 +565,12 @@ function setupBillingEvents(container, isAdmin) {
             const apptId = genAppointmentId.value;
 
             if (type === 'INPATIENT' && !admId) {
-                alert('Please search and select a discharged admission first.');
+                showToast('Please search and select a discharged admission first.', 'warning');
                 genAdmissionSearch.focus();
                 return;
             }
             if (type === 'OUTPATIENT' && !apptId) {
-                alert('Please search and select a completed appointment first.');
+                showToast('Please search and select a completed appointment first.', 'warning');
                 genAppointmentSearch.focus();
                 return;
             }
@@ -581,10 +581,10 @@ function setupBillingEvents(container, isAdmin) {
                 } else {
                     await api.post(`/bills/generate/outpatient/${apptId}`);
                 }
-                alert('Bill generated!');
+                showToast('Bill generated!', 'success');
                 closeGenModal();
                 loadBillsData(container, isAdmin, searchType.value, searchInput.value);
-            } catch (err) { alert('Error: ' + err.message); }
+            } catch (err) { showToast('Error: ' + err.message, 'error'); }
         });
     }
 
@@ -609,10 +609,10 @@ function setupBillingEvents(container, isAdmin) {
             const searchInput = container.querySelector('#bill-search-input');
             try {
                 await requestPatch(`/bills/${billId}/discount?percent=${percent}`);
-                alert('Discount applied!');
+                showToast('Discount applied!', 'success');
                 closeDiscountModal();
                 loadBillsData(container, isAdmin, searchType ? searchType.value : 'ALL', searchInput ? searchInput.value : '');
-            } catch (err) { alert('Error: ' + err.message); }
+            } catch (err) { showToast('Error: ' + err.message, 'error'); }
         });
     }
 }

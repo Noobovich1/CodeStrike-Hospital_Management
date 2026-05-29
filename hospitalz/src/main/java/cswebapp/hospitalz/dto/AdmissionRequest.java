@@ -1,4 +1,4 @@
-package cswebapp.hospitalz.model;
+package cswebapp.hospitalz.dto;
 
 import lombok.Data;
 

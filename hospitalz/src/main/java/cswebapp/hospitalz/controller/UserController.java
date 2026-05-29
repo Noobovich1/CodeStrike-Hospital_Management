@@ -1,16 +1,20 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
+import cswebapp.hospitalz.dto.ChangePasswordRequest;
+import cswebapp.hospitalz.dto.RoleUpdateRequest;
 import cswebapp.hospitalz.model.User;
 import cswebapp.hospitalz.model.UserRole;
 import cswebapp.hospitalz.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -27,12 +31,14 @@ public class UserController {
 
     // Lấy danh sách toàn bộ tài khoản
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
     // Admin cập nhật Role cho tài khoản
     @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUserRole(@PathVariable Long id, @RequestBody RoleUpdateRequest request) {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
@@ -49,12 +55,63 @@ public class UserController {
         }
     }
 
+    // Khóa / Mở khóa tài khoản
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        Boolean active = body.get("active");
+        if (active == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Field 'active' is required"));
+        }
+
+        user.setActive(active);
+        userRepository.save(user);
+        String status = active ? "unlocked" : "locked";
+        return ResponseEntity.ok(Map.of("message", "Account " + status + " successfully", "active", active));
+    }
+
+    // Tạo tài khoản Receptionist (User-only, không có record trong staff)
+    @PostMapping("/receptionist")
+    @PreAuthorize("hasRole('ADMIN')")
+    public synchronized ResponseEntity<?> createReceptionist() {
+        String usernamePrefix = "receptionist_";
+        Optional<String> lastUsernameOpt = userRepository.findLastUsernameByPrefix(usernamePrefix + "%");
+        int nextNumber = 1;
+        if (lastUsernameOpt.isPresent()) {
+            try {
+                String numberPart = lastUsernameOpt.get().substring(usernamePrefix.length());
+                nextNumber = Integer.parseInt(numberPart) + 1;
+            } catch (Exception e) {
+                nextNumber = 1;
+            }
+        }
+        String username = usernamePrefix + String.format("%02d", nextNumber);
+
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(passwordEncoder.encode("Pass1234"));
+        newUser.setRole(UserRole.RECEPTIONIST);
+        newUser.setActive(true);
+        userRepository.save(newUser);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Receptionist account created successfully",
+                "username", username,
+                "defaultPassword", "Pass1234"
+        ));
+    }
+
     // Đổi mật khẩu tài khoản hiện tại
     @PatchMapping("/me/password")
     public ResponseEntity<?> changePassword(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody ChangePasswordRequest request) {
-        
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No token provided"));
         }
@@ -83,8 +140,8 @@ public class UserController {
 
         // Validate mật khẩu mới theo regex
         if (!request.getNewPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d\\W]{8,}$")) {
-            return ResponseEntity.badRequest().body(Map.of("error", 
-                "Password must be at least 8 characters, and include at least one uppercase letter, one lowercase letter, and one number."));
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Password must be at least 8 characters, and include at least one uppercase letter, one lowercase letter, and one number."));
         }
 
         // Lưu mật khẩu đã mã hóa mới
@@ -93,4 +150,4 @@ public class UserController {
 
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
-}
+}

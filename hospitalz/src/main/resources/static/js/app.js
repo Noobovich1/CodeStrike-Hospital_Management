@@ -1,4 +1,5 @@
 // app.js - Main Application Logic
+import './modules/notifications.js';
 import { initSettingsModal } from './modules/settings.js';
 
 const sidebarNav = document.getElementById('sidebar-nav');
@@ -17,7 +18,7 @@ const roleConfig = {
         name: 'Admin',
         menu: [
             { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
-            { id: 'users', icon: 'fa-user-shield', label: 'User Roles' },
+            { id: 'users', icon: 'fa-user-shield', label: 'User Management' },
             { id: 'staff', icon: 'fa-users-gear', label: 'Staff Management' },
             { id: 'rooms', icon: 'fa-door-open', label: 'Room Management' },
             { id: 'register', icon: 'fa-address-card', label: 'Patient Management' },
@@ -42,7 +43,9 @@ const roleConfig = {
     WARD_BOY: {
         name: 'Ward Boy',
         menu: [
-            { id: 'rooms', icon: 'fa-door-open', label: 'Room Status' }
+            { id: 'rooms', icon: 'fa-door-open', label: 'Room Status' },
+            { id: 'ward-patients', icon: 'fa-bed-pulse', label: 'Room Assignments' },
+            { id: 'transport-tasks', icon: 'fa-truck-medical', label: 'Transport Tasks' }
         ]
     },
     RECEPTIONIST: {
@@ -117,17 +120,9 @@ function renderSidebar() {
 }
 
 // --- Content Loading ---
-const moduleCache = {};
 async function loadModule(moduleId, moduleTitle) {
     pageTitle.textContent = moduleTitle;
     contentArea.innerHTML = `<div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>`;
-    
-    // If already cached, reuse it — no API call
-    if (moduleCache[moduleId]) {
-        contentArea.innerHTML = '';
-        contentArea.appendChild(moduleCache[moduleId]);
-        return;
-    }
 
     try {
         let module;
@@ -184,6 +179,10 @@ async function loadModule(moduleId, moduleTitle) {
                 module = await import('./modules/records.js');
                 renderFunction = module.renderPatientRecords;
                 break;
+            case 'transport-tasks':
+                module = await import('./modules/transport.js');
+                renderFunction = module.renderTransportTasks;
+                break;
             // Add other module cases as they are implemented
             default:
                 contentArea.innerHTML = `<div class="glass-panel" style="padding: 20px;">Module <strong>${moduleId}</strong> is not yet implemented.</div>`;
@@ -192,7 +191,6 @@ async function loadModule(moduleId, moduleTitle) {
 
         if (renderFunction) {
             const content = await renderFunction();
-            moduleCache[moduleId] = content;  // ← cache it
             contentArea.innerHTML = '';
             contentArea.appendChild(content);
         }

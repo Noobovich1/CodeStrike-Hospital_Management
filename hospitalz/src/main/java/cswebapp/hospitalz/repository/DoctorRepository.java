@@ -13,6 +13,8 @@ public interface DoctorRepository extends JpaRepository<Doctor, String> {
     // Find all active doctors
     List<Doctor> findByIsActiveTrue();
 
+    long countByIsActiveTrue();
+
     // Find doctors by specialisation (useful when assigning to ICU patients etc.)
     List<Doctor> findBySpecialisationContainingIgnoreCase(String specialisation);
 

@@ -1,10 +1,11 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.Admission;
-import cswebapp.hospitalz.model.AdmissionRequest;
+import cswebapp.hospitalz.dto.AdmissionRequest;
 import cswebapp.hospitalz.service.AdmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class AdmissionController {
 
     // Admit a patient to a room
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<Admission> admitPatient(@RequestBody AdmissionRequest request) {
         return ResponseEntity.ok(admissionService.admitPatient(request));
     }
@@ -25,26 +27,31 @@ public class AdmissionController {
     // Discharge a patient — triggers total_days calculation
     // Bill generation will be a separate call after this
     @PutMapping("/{admissionId}/discharge")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<Admission> dischargePatient(@PathVariable Long admissionId) {
         return ResponseEntity.ok(admissionService.dischargePatient(admissionId));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'WARD_BOY')")
     public ResponseEntity<List<Admission>> getAllAdmissions() {
         return ResponseEntity.ok(admissionService.getAllAdmissions());
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'WARD_BOY')")
     public ResponseEntity<List<Admission>> getActiveAdmissions() {
         return ResponseEntity.ok(admissionService.getActiveAdmissions());
     }
 
     @GetMapping("/{admissionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'WARD_BOY')")
     public ResponseEntity<Admission> getAdmissionById(@PathVariable Long admissionId) {
         return ResponseEntity.ok(admissionService.getAdmissionById(admissionId));
     }
 
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'WARD_BOY')")
     public ResponseEntity<List<Admission>> getAdmissionsByPatient(@PathVariable String patientId) {
         return ResponseEntity.ok(admissionService.getAdmissionsByPatient(patientId));
     }

@@ -1,13 +1,15 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.Bill;
-import cswebapp.hospitalz.model.PaymentRequest;
+import cswebapp.hospitalz.dto.PaymentRequest;
 import cswebapp.hospitalz.service.BillService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 import java.util.List;
 
@@ -18,15 +20,23 @@ public class BillController {
     @Autowired
     private BillService billService;
 
+    @Autowired
+    private cswebapp.hospitalz.repository.PatientRepository patientRepository;
+
+    @Autowired
+    private cswebapp.hospitalz.repository.UserRepository userRepository;
+
     // Generate bill after discharge
-    // POST /api/v1/bills/generate/1  (1 = admissionId)
+    // POST /api/v1/bills/generate/1 (1 = admissionId)
     @PostMapping("/generate/{admissionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<Bill> generateBill(@PathVariable Long admissionId) {
         return ResponseEntity.ok(billService.generateBill(admissionId));
     }
 
     // Generate outpatient bill for completed appointment
     @PostMapping("/generate/outpatient/{appointmentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<Bill> generateOutpatientBill(@PathVariable Long appointmentId) {
         return ResponseEntity.ok(billService.generateOutpatientBill(appointmentId));
     }
@@ -34,6 +44,7 @@ public class BillController {
     // Record a payment (partial or full)
     // Body: { "amount": 100.00 }
     @PostMapping("/{billId}/pay")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<Bill> recordPayment(
             @PathVariable Long billId,
             @RequestBody PaymentRequest request) {
@@ -43,41 +54,99 @@ public class BillController {
     // Admin applies discount — recalculates total
     // PATCH /api/v1/bills/1/discount?percent=15
     @PatchMapping("/{billId}/discount")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Bill> applyDiscount(
             @PathVariable Long billId,
-            @RequestParam Double percent) {
+            @RequestParam java.math.BigDecimal percent) {
         return ResponseEntity.ok(billService.applyDiscount(billId, percent));
     }
 
     @GetMapping("/{billId}")
-    public ResponseEntity<Bill> getBillById(@PathVariable Long billId) {
-        return ResponseEntity.ok(billService.getBillById(billId));
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'PATIENT')")
+    public ResponseEntity<?> getBillById(@PathVariable Long billId, java.security.Principal principal) {
+        Bill bill = billService.getBillById(billId);
+        boolean isPatient = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"));
+        if (isPatient) {
+            cswebapp.hospitalz.model.User user = userRepository.findByUsername(principal.getName()).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: User not found"));
+            }
+            cswebapp.hospitalz.model.Patient patient = patientRepository.findByUser_Id(user.getId()).orElse(null);
+            if (patient == null || !patient.getPatientId().equals(bill.getPatient().getPatientId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: You cannot access other patients' bills"));
+            }
+        }
+        return ResponseEntity.ok(bill);
     }
 
     // Get bill by admission ID
     @GetMapping("/admission/{admissionId}")
-    public ResponseEntity<Bill> getBillByAdmission(@PathVariable Long admissionId) {
-        return ResponseEntity.ok(billService.getBillByAdmission(admissionId));
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'PATIENT')")
+    public ResponseEntity<?> getBillByAdmission(@PathVariable Long admissionId, java.security.Principal principal) {
+        Bill bill = billService.getBillByAdmission(admissionId);
+        boolean isPatient = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"));
+        if (isPatient) {
+            cswebapp.hospitalz.model.User user = userRepository.findByUsername(principal.getName()).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: User not found"));
+            }
+            cswebapp.hospitalz.model.Patient patient = patientRepository.findByUser_Id(user.getId()).orElse(null);
+            if (patient == null || !patient.getPatientId().equals(bill.getPatient().getPatientId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: You cannot access other patients' bills"));
+            }
+        }
+        return ResponseEntity.ok(bill);
     }
 
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<Bill>> getBillsByPatient(@PathVariable String patientId) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'PATIENT')")
+    public ResponseEntity<?> getBillsByPatient(@PathVariable String patientId, java.security.Principal principal) {
+        boolean isPatient = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"));
+        if (isPatient) {
+            cswebapp.hospitalz.model.User user = userRepository.findByUsername(principal.getName()).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: User not found"));
+            }
+            cswebapp.hospitalz.model.Patient patient = patientRepository.findByUser_Id(user.getId()).orElse(null);
+            if (patient == null || !patient.getPatientId().equals(patientId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: You cannot access other patients' bills"));
+            }
+        }
         return ResponseEntity.ok(billService.getBillsByPatient(patientId));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<List<Bill>> getAllBills() {
         return ResponseEntity.ok(billService.getAllBills());
     }
-     @GetMapping("/{billId}/pdf")
-    public ResponseEntity<byte[]> downloadBillPdf(@PathVariable Long billId) {
+
+    @GetMapping("/{billId}/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'PATIENT')")
+    public ResponseEntity<?> downloadBillPdf(@PathVariable Long billId, java.security.Principal principal) {
+        Bill bill = billService.getBillById(billId);
+        boolean isPatient = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"));
+        if (isPatient) {
+            cswebapp.hospitalz.model.User user = userRepository.findByUsername(principal.getName()).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: User not found"));
+            }
+            cswebapp.hospitalz.model.Patient patient = patientRepository.findByUser_Id(user.getId()).orElse(null);
+            if (patient == null || !patient.getPatientId().equals(bill.getPatient().getPatientId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: You cannot access other patients' bills"));
+            }
+        }
         byte[] pdfBytes = billService.generateBillPdf(billId);
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", "Bill_" + billId + ".pdf");
         headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        
+
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(pdfBytes);

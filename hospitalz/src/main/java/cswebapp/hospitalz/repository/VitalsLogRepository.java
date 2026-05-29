@@ -7,6 +7,8 @@ import java.util.List;
 
 @Repository
 public interface VitalsLogRepository extends JpaRepository<VitalsLog, Long> {
-    List<VitalsLog> findByPatientIdOrderByRecordedAtDesc(String patientId);
+    // Dùng navigation path patient.patientId thay vì plain String field
+    List<VitalsLog> findByPatient_PatientIdOrderByRecordedAtDesc(String patientId);
     List<VitalsLog> findAllByOrderByRecordedAtDesc();
 }
+

@@ -37,7 +37,7 @@ public class Room {
 
     // Per-day charge used in billing
     @Column(name = "daily_rate", nullable = false)
-    private Double dailyRate;
+    private java.math.BigDecimal dailyRate;
 
     @Column(name = "status")
     @Enumerated(EnumType.ORDINAL)

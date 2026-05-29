@@ -416,8 +416,11 @@
               // Chuyển hướng về trang chủ
               window.location.href = "/index.html";
             } else {
-              document.getElementById("error-msg").innerText =
-                "Wrong username or password!";
+              let errorMsg = "Wrong username or password!";
+              if (response.status === 403) {
+                errorMsg = await response.text();
+              }
+              document.getElementById("error-msg").innerText = errorMsg;
               document.getElementById("error-msg").style.display = "block";
             }
           } catch (err) {

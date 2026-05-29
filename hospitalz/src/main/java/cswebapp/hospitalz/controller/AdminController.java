@@ -6,40 +6,44 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.Map;
 import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/v1/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
-    @Autowired private AdmissionRepository admissionRepository;
-    @Autowired private RoomRepository roomRepository;
-    @Autowired private DoctorRepository doctorRepository;
-    @Autowired private BillRepository billRepository;
-    @Autowired private PatientRepository patientRepository;
+    @Autowired
+    private AdmissionRepository admissionRepository;
+    @Autowired
+    private RoomRepository roomRepository;
+    @Autowired
+    private DoctorRepository doctorRepository;
+    @Autowired
+    private BillRepository billRepository;
+    @Autowired
+    private PatientRepository patientRepository;
 
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
 
         // Active admissions count
-        stats.put("activeAdmissions", 
-            admissionRepository.findByStatus(AdmissionStatus.ACTIVE).size());
+        stats.put("activeAdmissions",
+                admissionRepository.countByStatus(AdmissionStatus.ACTIVE));
 
         // Available rooms count
         stats.put("availableRooms",
-            roomRepository.findAllAvailableRooms().size());
+                roomRepository.countAllAvailableRooms());
 
         // Active doctors count
         stats.put("activeDoctors",
-            doctorRepository.findByIsActiveTrue().size());
+                doctorRepository.countByIsActiveTrue());
 
         // Total revenue from paid + partial bills
-        double totalRevenue = billRepository.findAll().stream()
-            .mapToDouble(b -> b.getPaidAmount() != null ? b.getPaidAmount() : 0)
-            .sum();
-        stats.put("totalRevenue", totalRevenue);
+        stats.put("totalRevenue", billRepository.sumPaidAmount());
 
         // Room occupancy by type for chart
         var rooms = roomRepository.findAll();
@@ -53,7 +57,7 @@ public class AdminController {
         stats.put("roomOccupancy", occupancyByType);
 
         // Bills for revenue chart
-        stats.put("bills", billRepository.findAll());
+        stats.put("bills", billRepository.findBillSummaryForChart());
 
         return ResponseEntity.ok(stats);
     }

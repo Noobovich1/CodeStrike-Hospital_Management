@@ -36,42 +36,42 @@ public class Bill {
 
     // Room charges = daily_rate × total_days
     @Column(name = "room_charges", nullable = false)
-    private Double roomCharges;
+    private java.math.BigDecimal roomCharges;
 
     // Sum of all treatment_records (unit_cost_snapshot × quantity)
     @Column(name = "treatment_charges", nullable = false)
-    private Double treatmentCharges;
+    private java.math.BigDecimal treatmentCharges;
 
     // Sum of consultation fees for all assigned doctors
     @Column(name = "doctor_charges", nullable = false)
-    private Double doctorCharges;
+    private java.math.BigDecimal doctorCharges;
 
     // Medicines, misc — defaults to 0
     @Column(name = "other_charges")
-    private Double otherCharges = 0.0;
+    private java.math.BigDecimal otherCharges = java.math.BigDecimal.ZERO;
 
     // Outpatient appointment consultation charges
     @Column(name = "outpatient_charges")
-    private Double outpatientCharges = 0.0;
+    private java.math.BigDecimal outpatientCharges = java.math.BigDecimal.ZERO;
 
     // Percentage discount (0-100)
     @Column(name = "discount")
-    private Double discount = 0.0;
+    private java.math.BigDecimal discount = java.math.BigDecimal.ZERO;
 
     // VAT or applicable tax percentage
     @Column(name = "tax_percent")
-    private Double taxPercent = 10.0;
+    private java.math.BigDecimal taxPercent = java.math.BigDecimal.valueOf(10.0);
 
     // Final computed amount stored for audit
     @Column(name = "total_amount", nullable = false)
-    private Double totalAmount;
+    private java.math.BigDecimal totalAmount;
 
     @Column(name = "payment_status")
     @Enumerated(EnumType.ORDINAL)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Column(name = "paid_amount")
-    private Double paidAmount = 0.0;
+    private java.math.BigDecimal paidAmount = java.math.BigDecimal.ZERO;
 
     @Column(name = "generated_at")
     private LocalDateTime generatedAt;

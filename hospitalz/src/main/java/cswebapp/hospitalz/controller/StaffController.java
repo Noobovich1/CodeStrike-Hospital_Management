@@ -7,18 +7,34 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/staff")
+@PreAuthorize("hasRole('ADMIN')")
 public class StaffController {
 
     @Autowired
     private StaffService staffService;
 
     @PostMapping
-    public ResponseEntity<Staff> createStaff(@RequestBody Staff staff) {
-        return ResponseEntity.ok(staffService.createStaff(staff));
+    public ResponseEntity<?> createStaff(@RequestBody Staff staff) {
+        try {
+            Staff saved = staffService.createStaff(staff);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("staffId", saved.getStaffId());
+            response.put("fullName", saved.getFullName());
+            response.put("role", saved.getRole());
+            response.put("username", saved.getUser() != null ? saved.getUser().getUsername() : null);
+            response.put("defaultPassword", "Pass1234");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping

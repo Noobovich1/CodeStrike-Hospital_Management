@@ -27,7 +27,7 @@ public class Treatment {
 
     // Cost per session — used in billing
     @Column(name = "unit_cost", nullable = false)
-    private Double unitCost;
+    private java.math.BigDecimal unitCost;
 
     @Column(columnDefinition = "TEXT")
     private String description;
