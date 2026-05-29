@@ -33,6 +33,10 @@ public class TreatmentRecordService {
         Treatment treatment = treatmentRepository.findById(request.getTreatmentId())
                 .orElseThrow(() -> new RuntimeException("Treatment not found: " + request.getTreatmentId()));
 
+        if (treatment.getIsActive() != null && !treatment.getIsActive()) {
+            throw new IllegalArgumentException("Cannot prescribe an inactive treatment: " + treatment.getName());
+        }
+
         // 3. Find prescribing doctor
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new RuntimeException("Doctor not found: " + request.getDoctorId()));

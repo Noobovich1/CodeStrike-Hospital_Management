@@ -8,6 +8,7 @@ import cswebapp.hospitalz.repository.UserRepository;
 import cswebapp.hospitalz.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,22 +31,34 @@ public class PatientController {
     private JwtService jwtService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public Patient registerPatient(@RequestBody Patient patient) {
         return patientService.registerNewPatient(patient);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE')")
     public List<Patient> getAllPatients() {
         return patientService.getAllPatients();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Patient> getPatientById(@PathVariable String id) {
-        return ResponseEntity.ok(patientService.getPatientById(id));
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'WARD_BOY', 'PATIENT')")
+    public ResponseEntity<?> getPatientById(@PathVariable String id, java.security.Principal principal) {
+        Patient patient = patientService.getPatientById(id);
+        boolean isPatient = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"));
+        if (isPatient) {
+            if (patient.getUser() == null || !patient.getUser().getUsername().equals(principal.getName())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: You cannot access other patients' profiles"));
+            }
+        }
+        return ResponseEntity.ok(patient);
     }
 
     // Patient cập nhật hồ sơ của chính mình
     @PatchMapping("/me")
+    @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<?> updateCurrentPatientProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody PatientProfileUpdateRequest request) {
@@ -136,6 +149,7 @@ public class PatientController {
     }
 
     @PatchMapping("/{id}/clinical")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
     public ResponseEntity<Patient> updateClinicalDetails(
             @PathVariable String id,
             @RequestBody Map<String, String> payload) {

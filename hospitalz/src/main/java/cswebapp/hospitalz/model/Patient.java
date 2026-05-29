@@ -60,4 +60,24 @@ public class Patient {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
     private User user;
+
+    @PrePersist
+    @PreUpdate
+    private void validateFields() {
+        if (email != null && !email.isBlank()) {
+            if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")) {
+                throw new IllegalArgumentException("Invalid email format: " + email);
+            }
+        }
+        if (phoneNumber != null) {
+            if (!phoneNumber.matches("^[+]?[0-9]{8,15}$")) {
+                throw new IllegalArgumentException("Invalid phone number format: " + phoneNumber);
+            }
+        }
+        if (emergencyContactPhone != null && !emergencyContactPhone.isBlank()) {
+            if (!emergencyContactPhone.matches("^[+]?[0-9]{8,15}$")) {
+                throw new IllegalArgumentException("Invalid emergency contact phone number format: " + emergencyContactPhone);
+            }
+        }
+    }
 }

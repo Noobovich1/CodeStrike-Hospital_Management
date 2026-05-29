@@ -639,7 +639,7 @@ function setupTreatmentsEvents(container) {
         .map(
           (r) => `
                 <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 12px;">${r.recordId}</td>
+                    <td style="padding: 12px;">${r.id}</td>
                     <td style="padding: 12px;">${r.patient?.fullName || r.patient?.patientId || "-"} <span style="font-size:0.85em; color:var(--text-secondary);">(${r.patient?.patientId})</span></td>
                     <td style="padding: 12px;">${r.doctor?.fullName || r.doctor?.doctorId || "-"} <span style="font-size:0.85em; color:var(--text-secondary);">(${r.doctor?.doctorId})</span></td>
                     <td style="padding: 12px; font-weight: 500;">${r.treatment?.name}</td>

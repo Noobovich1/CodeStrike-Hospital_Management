@@ -84,7 +84,7 @@ public class RoomService {
         room.setCurrentOccupancy(newOccupancy);
 
         // If there's now space, mark AVAILABLE again
-        if (newOccupancy < room.getCapacity()) {
+        if (newOccupancy < room.getCapacity() && room.getStatus() != RoomStatus.MAINTENANCE) {
             room.setStatus(RoomStatus.AVAILABLE);
         }
 

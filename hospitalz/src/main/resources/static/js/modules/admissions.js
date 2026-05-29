@@ -8,19 +8,11 @@ export async function renderActiveAdmissions() {
     const isNurse = role === 'NURSE';
     const isWardBoy = role === 'WARD_BOY';
     const isReceptionist = role === 'RECEPTIONIST' || role === 'ADMIN';
-    const assignedWard = getStorageItem('assignedWard') || '';
 
     container.innerHTML = `
         <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
                 <h2 style="margin: 0;">${isWardBoy ? 'Room Assignments' : (isNurse ? 'Inpatient Management' : 'Admission & Bed Assignment')}</h2>
-                
-                <!-- Info of assigned ward for nurse -->
-                ${isNurse && assignedWard ? `
-                    <div style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 8px 16px; border-radius: 8px; font-size: 0.95em; color: var(--accent-primary); font-weight: 600;">
-                        <i class="fa-solid fa-bed-pulse"></i> Assigned Ward: ${assignedWard}
-                    </div>
-                ` : ''}
 
                 <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                     ${isReceptionist ? `
@@ -282,12 +274,12 @@ export async function renderActiveAdmissions() {
 
     // Load data and set up events
     setTimeout(() => {
-        loadActiveAdmissions(container, isNurse, assignedWard);
+        loadActiveAdmissions(container, isNurse);
         if (isReceptionist) {
             loadHistoryAdmissions(container);
             loadAvailableRooms(container);
         }
-        setupAdmissionsEvents(container, isNurse, assignedWard);
+        setupAdmissionsEvents(container, isNurse);
     }, 0);
 
     return container;
@@ -325,7 +317,7 @@ async function loadAllRoomsForTransport(container) {
     }
 }
 
-async function loadActiveAdmissions(container, isNurse, assignedWard) {
+async function loadActiveAdmissions(container, isNurse) {
     const tbody = container.querySelector('#admissions-table-body');
     if (!tbody) return;
     try {
@@ -334,19 +326,7 @@ async function loadActiveAdmissions(container, isNurse, assignedWard) {
         const isReceptionist = role === 'RECEPTIONIST' || role === 'ADMIN';
         const admissions = await api.get('/admissions/active');
         
-        // Filter by assigned ward for Nurse
         let filtered = admissions;
-        if (isNurse && assignedWard) {
-            const ward = assignedWard.toLowerCase().trim();
-            filtered = admissions.filter(a => {
-                const notes = (a.room?.notes || '').toLowerCase();
-                const num = (a.room?.roomNumber || '').toLowerCase();
-                return notes.includes(ward) || num.includes(ward) || 
-                       (ward.includes('icu') && (notes.includes('icu') || num.includes('icu'))) ||
-                       (ward.includes('emergency') && (notes.includes('emergency') || num.includes('er'))) ||
-                       (ward.includes('medical') && (notes.includes('general') || notes.includes('medical') || num.includes('room-101')));
-            });
-        }
 
         if (filtered.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${isWardBoy ? 5 : 6}" style="text-align: center; padding: 20px; color: var(--text-secondary);">No active inpatient admissions.</td></tr>`;
@@ -395,7 +375,7 @@ async function loadActiveAdmissions(container, isNurse, assignedWard) {
                         try {
                             await api.put(`/admissions/${id}/discharge`);
                             alert('Patient discharged successfully!');
-                            loadActiveAdmissions(container, isNurse, assignedWard);
+                            loadActiveAdmissions(container, isNurse);
                             if (isReceptionist) {
                                 loadHistoryAdmissions(container);
                                 loadAvailableRooms(container);
@@ -443,14 +423,18 @@ async function loadPatientChecklist(container, patientId) {
         }
 
         listBody.innerHTML = records.map(r => {
-            const isDone = (r.notes || '').includes('[Executed]');
+            const isDone = (r.notes || '').includes('[Executed');
             const statusLabel = isDone 
                 ? '<span style="color: var(--status-success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Executed</span>' 
                 : '<span style="color: var(--status-warning); font-weight: 600;"><i class="fa-solid fa-clock"></i> Pending</span>';
             
             const actionBtn = isDone 
                 ? '<button disabled style="padding: 4px 8px; opacity: 0.5; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-secondary); cursor: not-allowed;">Completed</button>'
-                : `<button class="btn btn-done-treatment" data-id="${r.recordId}" data-notes="${r.notes || ''}" data-patient="${patientId}" style="padding: 4px 8px; background: var(--status-success); color: white; border: none; border-radius: 4px; cursor: pointer;">Execute</button>`;
+                : `<button class="btn btn-done-treatment" data-id="${r.id}" data-notes="${r.notes || ''}" data-patient="${patientId}" style="padding: 4px 8px; background: var(--status-success); color: white; border: none; border-radius: 4px; cursor: pointer;">Execute</button>`;
+
+            const displayNotes = (r.notes || '')
+                .replace(/\|?\s*\[Executed[^\]]*\]/g, '')
+                .trim();
 
             return `
                 <tr style="border-bottom: 1px solid var(--border-color);">
@@ -458,8 +442,8 @@ async function loadPatientChecklist(container, patientId) {
                     <td style="padding: 8px;">${r.quantity}</td>
                     <td style="padding: 8px;">${r.doctor?.fullName || '-'}</td>
                     <td style="padding: 8px;">${r.sessionDate ? new Date(r.sessionDate).toLocaleDateString('en-US') : '-'}</td>
-                    <td style="padding: 8px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${r.notes || ''}">
-                        ${statusLabel} <span style="font-size: 0.85em; color: var(--text-secondary);">${r.notes || ''}</span>
+                    <td style="padding: 8px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${displayNotes || ''}">
+                        ${statusLabel} ${displayNotes ? `<span style="font-size: 0.85em; color: var(--text-secondary);">${displayNotes}</span>` : ''}
                     </td>
                     <td style="padding: 8px;">${actionBtn}</td>
                 </tr>
@@ -523,7 +507,7 @@ async function loadHistoryAdmissions(container) {
     }
 }
 
-function setupAdmissionsEvents(container, isNurse, assignedWard) {
+function setupAdmissionsEvents(container, isNurse) {
     const role = getStorageItem('role') || '';
     const isWardBoy = role === 'WARD_BOY';
     if (isWardBoy) return;
@@ -577,7 +561,7 @@ function setupAdmissionsEvents(container, isNurse, assignedWard) {
         if (closeChecklistBtn) {
             closeChecklistBtn.onclick = () => {
                 checklistModal.style.display = 'none';
-                loadActiveAdmissions(container, isNurse, assignedWard);
+                loadActiveAdmissions(container, isNurse);
             };
         }
         return;
@@ -802,7 +786,7 @@ function setupAdmissionsEvents(container, isNurse, assignedWard) {
             await api.post('/admissions', payload);
             alert('Patient admitted successfully!');
             closeAdmit();
-            loadActiveAdmissions(container, isNurse, assignedWard);
+            loadActiveAdmissions(container, isNurse);
             loadAvailableRooms(container);
         } catch (err) {
             alert('Error: ' + err.message);

@@ -8,6 +8,7 @@ import cswebapp.hospitalz.model.UserRole;
 import cswebapp.hospitalz.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,12 +31,14 @@ public class UserController {
 
     // Lấy danh sách toàn bộ tài khoản
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
     // Admin cập nhật Role cho tài khoản
     @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUserRole(@PathVariable Long id, @RequestBody RoleUpdateRequest request) {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
@@ -54,6 +57,7 @@ public class UserController {
 
     // Khóa / Mở khóa tài khoản
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
@@ -73,6 +77,7 @@ public class UserController {
 
     // Tạo tài khoản Receptionist (User-only, không có record trong staff)
     @PostMapping("/receptionist")
+    @PreAuthorize("hasRole('ADMIN')")
     public synchronized ResponseEntity<?> createReceptionist() {
         String usernamePrefix = "receptionist_";
         Optional<String> lastUsernameOpt = userRepository.findLastUsernameByPrefix(usernamePrefix + "%");
