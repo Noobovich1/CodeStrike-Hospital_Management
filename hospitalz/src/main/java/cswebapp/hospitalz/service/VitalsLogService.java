@@ -1,5 +1,7 @@
 package cswebapp.hospitalz.service;
 
+import cswebapp.hospitalz.exception.ResourceNotFoundException;
+import cswebapp.hospitalz.model.Patient;
 import cswebapp.hospitalz.model.VitalsLog;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.VitalsLogRepository;
@@ -20,11 +22,13 @@ public class VitalsLogService {
     private PatientRepository patientRepository;
 
     @Transactional
-    public VitalsLog recordVitals(VitalsLog vitalsLog) {
-        // Kiểm tra xem bệnh nhân có tồn tại hay không (Task 1.2)
-        if (!patientRepository.existsById(vitalsLog.getPatientId())) {
-            throw new IllegalArgumentException("Patient not found: " + vitalsLog.getPatientId());
-        }
+    public VitalsLog recordVitals(String patientId, VitalsLog vitalsLog) {
+        // Load Patient object — nếu không tìm thấy sẽ throw 404
+        // FK constraint ở DB level cũng sẽ enforce khi save
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found: " + patientId));
+
+        vitalsLog.setPatient(patient);
 
         if (vitalsLog.getRecordedAt() == null) {
             vitalsLog.setRecordedAt(LocalDateTime.now());
@@ -33,7 +37,7 @@ public class VitalsLogService {
     }
 
     public List<VitalsLog> getVitalsByPatient(String patientId) {
-        return vitalsLogRepository.findByPatientIdOrderByRecordedAtDesc(patientId);
+        return vitalsLogRepository.findByPatient_PatientIdOrderByRecordedAtDesc(patientId);
     }
 
     public List<VitalsLog> getAllVitals() {

@@ -1,5 +1,6 @@
 package cswebapp.hospitalz.controller;
 
+import cswebapp.hospitalz.exception.ResourceNotFoundException;
 import cswebapp.hospitalz.model.VitalsLog;
 import cswebapp.hospitalz.service.VitalsLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +15,16 @@ public class VitalsLogController {
     @Autowired
     private VitalsLogService vitalsLogService;
 
-    @PostMapping
-    public ResponseEntity<?> recordVitals(@RequestBody VitalsLog vitalsLog) {
+    // POST /api/v1/vitals/{patientId}
+    // patientId truyền qua path, thông tin vitals qua body
+    @PostMapping("/{patientId}")
+    public ResponseEntity<?> recordVitals(
+            @PathVariable String patientId,
+            @RequestBody VitalsLog vitalsLog) {
         try {
-            VitalsLog saved = vitalsLogService.recordVitals(vitalsLog);
+            VitalsLog saved = vitalsLogService.recordVitals(patientId, vitalsLog);
             return ResponseEntity.ok(saved);
-        } catch (IllegalArgumentException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
@@ -36,3 +41,4 @@ public class VitalsLogController {
         return ResponseEntity.ok(list);
     }
 }
+

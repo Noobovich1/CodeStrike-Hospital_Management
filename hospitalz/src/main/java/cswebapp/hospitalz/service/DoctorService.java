@@ -1,11 +1,17 @@
 package cswebapp.hospitalz.service;
 
 import cswebapp.hospitalz.model.Doctor;
+import cswebapp.hospitalz.model.User;
+import cswebapp.hospitalz.model.UserRole;
 import cswebapp.hospitalz.repository.DoctorRepository;
+import cswebapp.hospitalz.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -14,13 +20,45 @@ public class DoctorService {
     @Autowired
     private DoctorRepository doctorRepository;
 
-    public Doctor registerDoctor(Doctor doctor) {
-        // Same ID pattern as Patient: DOC-XXXXXXXX
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Transactional
+    public synchronized Doctor registerDoctor(Doctor doctor) {
+        // Same ID pattern as before: DOC-XXXXXXXX (UUID)
         String uniqueId = "DOC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         doctor.setDoctorId(uniqueId);
         doctor.setIsActive(true);
+
+        // --- Sinh Username (cùng pattern với Staff) ---
+        String usernamePrefix = "doctor_";
+        Optional<String> lastUsernameOpt = userRepository.findLastUsernameByPrefix(usernamePrefix + "%");
+        int nextNumber = 1;
+        if (lastUsernameOpt.isPresent()) {
+            try {
+                String numberPart = lastUsernameOpt.get().substring(usernamePrefix.length());
+                nextNumber = Integer.parseInt(numberPart) + 1;
+            } catch (Exception e) {
+                nextNumber = 1;
+            }
+        }
+        String username = usernamePrefix + String.format("%02d", nextNumber);
+
+        // --- Tạo User account ---
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(passwordEncoder.encode("Pass1234"));
+        newUser.setRole(UserRole.DOCTOR);
+        newUser.setActive(true);
+        User savedUser = userRepository.save(newUser);
+
+        doctor.setUser(savedUser);
         return doctorRepository.save(doctor);
     }
+
 
     public List<Doctor> getAllDoctors() {
         return doctorRepository.findAll();

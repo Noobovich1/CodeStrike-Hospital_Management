@@ -17,7 +17,7 @@ const roleConfig = {
         name: 'Admin',
         menu: [
             { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
-            { id: 'users', icon: 'fa-user-shield', label: 'User Roles' },
+            { id: 'users', icon: 'fa-user-shield', label: 'User Management' },
             { id: 'staff', icon: 'fa-users-gear', label: 'Staff Management' },
             { id: 'rooms', icon: 'fa-door-open', label: 'Room Management' },
             { id: 'register', icon: 'fa-address-card', label: 'Patient Management' },
@@ -117,17 +117,9 @@ function renderSidebar() {
 }
 
 // --- Content Loading ---
-const moduleCache = {};
 async function loadModule(moduleId, moduleTitle) {
     pageTitle.textContent = moduleTitle;
     contentArea.innerHTML = `<div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>`;
-    
-    // If already cached, reuse it — no API call
-    if (moduleCache[moduleId]) {
-        contentArea.innerHTML = '';
-        contentArea.appendChild(moduleCache[moduleId]);
-        return;
-    }
 
     try {
         let module;
@@ -192,7 +184,6 @@ async function loadModule(moduleId, moduleTitle) {
 
         if (renderFunction) {
             const content = await renderFunction();
-            moduleCache[moduleId] = content;  // ← cache it
             contentArea.innerHTML = '';
             contentArea.appendChild(content);
         }

@@ -47,6 +47,11 @@ public class AuthController {
 
         // passwordEncoder.matches(mật_khẩu_nhập_vào, mật_khẩu_đã_mã_hóa_trong_db)
         if (user != null && passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            // Kiểm tra tài khoản có bị khóa không
+            if (!user.isActive()) {
+                return ResponseEntity.status(403).body("Account is locked. Please contact admin.");
+            }
+
             String token = jwtService.generateToken(user.getUsername(), user.getRole().name(), request.isRememberMe());
             Map<String, Object> response = new java.util.HashMap<>();
             response.put("token", token);
@@ -179,6 +184,6 @@ public class AuthController {
                 nextNumber = 1;
             }
         }
-        return prefix + String.format("%05d", nextNumber);
+        return prefix + String.format("%04d", nextNumber); // 4 chữ số, đồng bộ với Staff ID
     }
 }

@@ -1,5 +1,6 @@
 package cswebapp.hospitalz.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,8 +18,11 @@ public class VitalsLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "patient_id", nullable = false, length = 20)
-    private String patientId;
+    // FK thật tới bảng patients — DB-level constraint
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Patient patient;
 
     @Column(name = "blood_pressure", length = 20)
     private String bloodPressure;
@@ -36,3 +40,4 @@ public class VitalsLog {
     @Column(name = "recorded_at")
     private LocalDateTime recordedAt = LocalDateTime.now();
 }
+

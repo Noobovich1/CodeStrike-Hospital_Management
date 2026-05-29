@@ -96,6 +96,7 @@ async function loadVitalsData(container) {
 
             allLogs = logs || [];
             
+            // patientMap vẫn dùng để fallback name lookup nếu cần
             patients.forEach(p => {
                 patientMap.set(p.patientId, p.fullName);
             });
@@ -131,7 +132,9 @@ async function loadVitalsData(container) {
         }
 
         tbody.innerHTML = logsToRender.map(l => {
-            const patientName = patientMap.get(l.patientId) || 'Unknown Patient';
+            // Sau khi đổi sang @ManyToOne, response trả về nested patient object
+            const pid = l.patient?.patientId || l.patientId || '?';
+            const patientName = l.patient?.fullName || patientMap.get(pid) || 'Unknown Patient';
             const tempVal = l.temperature || 0;
             const spo2Val = l.oxygenLevel || 0;
 
@@ -159,7 +162,7 @@ async function loadVitalsData(container) {
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px;">
                         <div style="font-weight: 600; color: var(--text-primary);">${patientName}</div>
-                        <div style="font-size: 0.8em; color: var(--text-secondary);">${l.patientId}</div>
+                        <div style="font-size: 0.8em; color: var(--text-secondary);">${pid}</div>
                     </td>
                     <td style="padding: 12px; font-weight: 500;">
                         <i class="fa-solid fa-gauge-high" style="color: var(--text-secondary); margin-right: 4px;"></i> ${l.bloodPressure || '-'}
@@ -193,8 +196,9 @@ async function loadVitalsData(container) {
         }
 
         const filtered = allLogs.filter(l => {
-            const name = (patientMap.get(l.patientId) || '').toLowerCase();
-            const id = (l.patientId || '').toLowerCase();
+            const pid = l.patient?.patientId || l.patientId || '';
+            const name = (l.patient?.fullName || patientMap.get(pid) || '').toLowerCase();
+            const id = pid.toLowerCase();
             const recordedBy = (l.recordedBy || '').toLowerCase();
             return name.includes(query) || id.includes(query) || recordedBy.includes(query);
         });
