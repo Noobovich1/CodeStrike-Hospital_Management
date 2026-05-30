@@ -298,8 +298,6 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
         });
         
     // Pagination controls
-    const prevBtn = container.querySelector('#btn-prev-page');
-    const nextBtn = container.querySelector('#btn-next-page');
     if (prevBtn) {
         prevBtn.onclick = () => {
             if (currentPage > 0) {
