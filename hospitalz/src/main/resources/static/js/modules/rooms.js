@@ -168,6 +168,15 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                         <button class="btn-icon btn-toggle-status" data-id="${r.roomId}" data-status="${r.status}" title="Request cleaning / maintenance">
                             <i class="fa-solid ${r.status === 'MAINTENANCE' ? 'fa-square-check' : 'fa-screwdriver-wrench'}"></i>
                         </button>
+                        ${r.isActive !== false ? `
+                            <button class="btn-icon btn-icon-deactivate btn-deactivate-room" data-id="${r.roomId}" data-room="${r.roomNumber}" title="Deactivate Room">
+                                <i class="fa-solid fa-ban"></i>
+                            </button>
+                        ` : `
+                            <button class="btn-icon btn-icon-activate btn-activate-room" data-id="${r.roomId}" data-room="${r.roomNumber}" title="Activate Room">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
                     </div>
                 `;
             } else {
@@ -180,7 +189,7 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
             }
 
             return `
-            <tr style="border-bottom: 1px solid var(--border-color);">
+            <tr style="border-bottom: 1px solid var(--border-color); ${r.isActive === false ? 'opacity: 0.6; background: var(--bg-secondary);' : ''}">
                 <td style="padding: 12px;">${r.roomId}</td>
                 <td style="padding: 12px; font-weight: 500;">Room ${r.roomNumber}</td>
                 <td style="padding: 12px;">${r.roomType === 'GENERAL' ? 'General Room' : (r.roomType === 'ICU' ? 'ICU' : 'Operating Room')}</td>
@@ -195,7 +204,9 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                     </div>
                 </td>
                 ${!isWardBoy ? `<td style="padding: 12px; font-weight: 600; color: var(--accent-primary);">$${r.dailyRate}</td>` : ''}
-                <td style="padding: 12px;">${statusBadge}</td>
+                <td style="padding: 12px;">
+                    ${r.isActive === false ? `<span style="color: var(--status-error); font-weight: 600;"><i class="fa-solid fa-ban"></i> INACTIVE</span>` : statusBadge}
+                </td>
                 <td style="padding: 12px;">${actionButtons}</td>
             </tr>
         `}).join('');
@@ -249,6 +260,40 @@ async function loadRoomData(statusFilter, isWardBoy, isAdmin) {
                         loadRoomData(filter, isWardBoy, isAdmin);
                     } catch (error) {
                         showToast('Update error: ' + error.message, 'error');
+                    }
+                };
+            });
+
+            document.querySelectorAll('.btn-deactivate-room').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const roomId = e.currentTarget.dataset.id;
+                    const roomNumber = e.currentTarget.dataset.room;
+                    if (confirm(`Are you sure you want to deactivate Room ${roomNumber}?\n\nThis will archive the room. Patients currently assigned to this room must be moved first.`)) {
+                        try {
+                            await api.delete(`/rooms/${roomId}`);
+                            showToast(`Room ${roomNumber} deactivated successfully!`, "success");
+                            const filter = document.getElementById('room-status-filter').value;
+                            loadRoomData(filter, isWardBoy, isAdmin);
+                        } catch (error) {
+                            showToast("Error deactivating room: " + error.message, "error");
+                        }
+                    }
+                };
+            });
+
+            document.querySelectorAll('.btn-activate-room').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const roomId = e.currentTarget.dataset.id;
+                    const roomNumber = e.currentTarget.dataset.room;
+                    if (confirm(`Are you sure you want to activate Room ${roomNumber}?\n\nThis will restore the room for use.`)) {
+                        try {
+                            await api.post(`/rooms/${roomId}/activate`);
+                            showToast(`Room ${roomNumber} activated successfully!`, "success");
+                            const filter = document.getElementById('room-status-filter').value;
+                            loadRoomData(filter, isWardBoy, isAdmin);
+                        } catch (error) {
+                            showToast("Error activating room: " + error.message, "error");
+                        }
                     }
                 };
             });

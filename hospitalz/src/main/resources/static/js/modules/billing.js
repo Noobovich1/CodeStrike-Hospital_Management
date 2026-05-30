@@ -136,6 +136,7 @@ export async function renderBilling() {
                     <button id="close-bill-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                 </div>
                 <div id="bill-modal-content"></div>
+                <div id="bill-status-display" style="margin-top: 12px;"></div>
                 <div style="margin-top: 20px; text-align: right;">
                     <button id="btn-download-pdf" class="btn" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">
                         <i class="fa-solid fa-download"></i> Download PDF
@@ -194,9 +195,18 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
             if (b.paymentStatus === 'PENDING') statusBadgeColor = 'var(--status-warning)';
             if (b.paymentStatus === 'PARTIAL') statusBadgeColor = 'var(--accent-primary)';
             if (b.paymentStatus === 'PAID') statusBadgeColor = 'var(--status-success)';
+            if (b.paymentStatus === 'REFUNDED') statusBadgeColor = 'var(--status-danger)';
+            
+            // Bill status (ACTIVE, VOIDED, REFUNDED)
+            let billStatusBadge = '';
+            if (b.billStatus === 'VOIDED') {
+                billStatusBadge = '<span style="background: var(--status-danger); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; margin-left: 6px;">VOIDED</span>';
+            } else if (b.billStatus === 'REFUNDED') {
+                billStatusBadge = '<span style="background: #9b59b6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; margin-left: 6px;">REFUNDED</span>';
+            }
 
             return `
-            <tr style="border-bottom: 1px solid var(--border-color);">
+            <tr style="border-bottom: 1px solid var(--border-color); ${b.billStatus === 'VOIDED' || b.billStatus === 'REFUNDED' ? 'opacity: 0.6; background: rgba(0,0,0,0.05);' : ''}">
                 <td style="padding: 12px;">${b.billId}</td>
                 <td style="padding: 12px; font-weight: 500;">${b.patient?.fullName || b.patient?.patientId || '-'} <span style="font-size:0.85em; color:var(--text-secondary);">(${b.patient?.patientId})</span></td>
                 <td style="padding: 12px;">$${total.toFixed(2)}</td>
@@ -204,7 +214,7 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
                 <td style="padding: 12px; color: var(--status-danger); font-weight: bold;">$${balance.toFixed(2)}</td>
                 <td style="padding: 12px;">
                     <span style="color: ${statusBadgeColor}; font-weight: 600; text-transform: uppercase;">
-                        ${b.paymentStatus}
+                        ${b.paymentStatus}${billStatusBadge}
                     </span>
                 </td>
                 <td style="padding: 12px;">
@@ -212,14 +222,20 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
                         <button class="btn-icon btn-icon-view btn-view-bill" data-id="${b.billId}" title="View Details">
                             <i class="fa-solid fa-eye"></i>
                         </button>
-                        ${b.paymentStatus !== 'PAID' ? `
+                        ${b.billStatus === 'ACTIVE' && b.paymentStatus !== 'PAID' ? `
                             <button class="btn-icon btn-icon-pay btn-pay-bill" data-id="${b.billId}" title="Pay Bill">
                                 <i class="fa-solid fa-wallet"></i>
                             </button>
                         ` : ''}
-                        ${isAdmin && b.paymentStatus !== 'PAID' ? `
+                        ${isAdmin && b.billStatus === 'ACTIVE' && b.paymentStatus !== 'PAID' ? `
                             <button class="btn-icon btn-icon-discount btn-disc-bill" data-id="${b.billId}" title="Apply Discount">
                                 <i class="fa-solid fa-tag"></i>
+                            </button>
+                            <button class="btn-icon btn-icon-void btn-void-bill" data-id="${b.billId}" data-total="${total}" title="Void Bill">
+                                <i class="fa-solid fa-ban"></i>
+                            </button>
+                            <button class="btn-icon btn-icon-refund btn-refund-bill" data-id="${b.billId}" data-paid="${paid}" title="Refund Bill">
+                                <i class="fa-solid fa-rotate-left"></i>
                             </button>
                         ` : ''}
                     </div>
@@ -239,6 +255,52 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
             container.querySelectorAll('.btn-disc-bill').forEach(btn => btn.onclick = () => {
                 container.querySelector('#disc-bill-id').value = btn.dataset.id;
                 container.querySelector('#discount-modal').style.display = 'flex';
+            });
+            
+            // Void bill buttons
+            container.querySelectorAll('.btn-void-bill').forEach(btn => btn.onclick = async () => {
+                const billId = btn.dataset.id;
+                const total = btn.dataset.total;
+                if (confirm(`Are you sure you want to VOID Bill #${billId}?\n\nTotal Amount: $${parseFloat(total).toFixed(2)}\n\nThis action cannot be undone. The bill will be marked as voided.`)) {
+                    try {
+                        await api.delete(`/bills/${billId}`);
+                        showToast(`Bill #${billId} voided successfully!`, "success");
+                        const searchType = container.querySelector('#bill-search-type');
+                        const searchInput = container.querySelector('#bill-search-input');
+                        loadBillsData(container, isAdmin, searchType ? searchType.value : 'ALL', searchInput ? searchInput.value : '');
+                    } catch (error) {
+                        showToast("Error voiding bill: " + error.message, "error");
+                    }
+                }
+            });
+            
+            // Refund bill buttons
+            container.querySelectorAll('.btn-refund-bill').forEach(btn => btn.onclick = async () => {
+                const billId = btn.dataset.id;
+                const paid = parseFloat(btn.dataset.paid);
+                const refundAmount = prompt(`Enter refund amount for Bill #${billId}\n\nAmount Paid: $${paid.toFixed(2)}\n\nEnter the refund amount (must be less than or equal to $${paid.toFixed(2)}):`);
+                
+                if (refundAmount !== null) {
+                    const amount = parseFloat(refundAmount);
+                    if (isNaN(amount) || amount <= 0) {
+                        showToast("Invalid refund amount. Please enter a positive number.", "error");
+                        return;
+                    }
+                    if (amount > paid) {
+                        showToast(`Refund amount cannot exceed paid amount ($${paid.toFixed(2)})`, "error");
+                        return;
+                    }
+                    
+                    try {
+                        await api.post(`/bills/${billId}/refund`, amount);
+                        showToast(`Bill #${billId} refunded successfully!`, "success");
+                        const searchType = container.querySelector('#bill-search-type');
+                        const searchInput = container.querySelector('#bill-search-input');
+                        loadBillsData(container, isAdmin, searchType ? searchType.value : 'ALL', searchInput ? searchInput.value : '');
+                    } catch (error) {
+                        showToast("Error refunding bill: " + error.message, "error");
+                    }
+                }
             });
         }
 
@@ -335,6 +397,21 @@ async function showBillDetails(billId, container) {
                 showToast('Failed to generate PDF: ' + error.message, 'error');
             }
         };
+        
+        // Show bill status (VOIDED/REFUNDED)
+        const statusContainer = container.querySelector('#bill-status-display');
+        if (statusContainer) {
+            if (bill.billStatus === 'VOIDED') {
+                statusContainer.innerHTML = `<span style="background: var(--status-danger); color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600;">VOIDED</span>`;
+            } else if (bill.billStatus === 'REFUNDED') {
+                statusContainer.innerHTML = `
+                    <span style="background: #9b59b6; color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600;">REFUNDED</span>
+                    ${bill.refundAmount ? `<span style="margin-left: 8px; color: var(--text-secondary);">Refund Amount: $${parseFloat(bill.refundAmount).toFixed(2)}</span>` : ''}
+                `;
+            } else {
+                statusContainer.innerHTML = '';
+            }
+        }
     } catch (e) {
         content.innerHTML = '<span style="color:red;">Error loading details</span>';
     }

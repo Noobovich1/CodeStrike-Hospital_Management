@@ -260,4 +260,38 @@ public class BillService {
     public byte[] generateBillPdf(Long billId) {
         return billPdfService.generateBillPdf(billId);
     }
+
+    @Transactional
+    public void voidBill(Long billId) {
+        Bill bill = getBillById(billId);
+        if (bill.getBillStatus() == BillStatus.VOIDED) {
+            throw new RuntimeException("Bill is already voided");
+        }
+        if (bill.getBillStatus() == BillStatus.REFUNDED) {
+            throw new RuntimeException("Cannot void a refunded bill");
+        }
+        bill.setBillStatus(BillStatus.VOIDED);
+        billRepository.save(bill);
+    }
+
+    @Transactional
+    public void refundBill(Long billId, BigDecimal refundAmount) {
+        Bill bill = getBillById(billId);
+        if (bill.getBillStatus() == BillStatus.VOIDED) {
+            throw new RuntimeException("Cannot refund a voided bill");
+        }
+        if (bill.getBillStatus() == BillStatus.REFUNDED) {
+            throw new RuntimeException("Bill is already refunded");
+        }
+        if (refundAmount == null || refundAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Refund amount must be positive");
+        }
+        if (refundAmount.compareTo(bill.getPaidAmount()) > 0) {
+            throw new RuntimeException("Refund amount cannot exceed paid amount: " + bill.getPaidAmount());
+        }
+        bill.setRefundAmount(refundAmount);
+        bill.setBillStatus(BillStatus.REFUNDED);
+        bill.setPaymentStatus(PaymentStatus.REFUNDED);
+        billRepository.save(bill);
+    }
 }

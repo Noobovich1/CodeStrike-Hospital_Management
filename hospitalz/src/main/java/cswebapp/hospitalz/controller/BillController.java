@@ -151,4 +151,20 @@ public class BillController {
                 .headers(headers)
                 .body(pdfBytes);
     }
+
+    @DeleteMapping("/{billId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> voidBill(@PathVariable Long billId) {
+        billService.voidBill(billId);
+        return ResponseEntity.ok(Map.of("message", "Bill voided successfully"));
+    }
+
+    @PostMapping("/{billId}/refund")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> refundBill(
+            @PathVariable Long billId,
+            @RequestBody java.math.BigDecimal refundAmount) {
+        billService.refundBill(billId, refundAmount);
+        return ResponseEntity.ok(Map.of("message", "Bill refunded successfully"));
+    }
 }

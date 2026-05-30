@@ -119,21 +119,21 @@ function renderPatientTable(patientList, container) {
   if (!tbody) return;
 
   if (!patientList || patientList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">No patients found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">No patients found.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = patientList
     .map(
       (p) => `
-        <tr style="border-bottom: 1px solid var(--border-color);">
+        <tr style="border-bottom: 1px solid var(--border-color); ${p.isActive === false ? 'opacity: 0.6; background: var(--bg-secondary);' : ''}">
             <td style="padding: 12px;">${p.patientId || "-"}</td>
             <td style="padding: 12px; font-weight: 500;">${p.fullName}</td>
             <td style="padding: 12px;">${p.gender}</td>
             <td style="padding: 12px;">${p.phoneNumber}</td>
             <td style="padding: 12px;">
-                <span style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 0.85em;">
-                    ${p.status || "OUTPATIENT"}
+                <span style="background: ${p.isActive === false ? 'var(--status-error)' : 'var(--status-success)'}; padding: 4px 8px; border-radius: 4px; color: white; font-size: 0.85em;">
+                    ${p.isActive === false ? "INACTIVE" : "ACTIVE"}
                 </span>
             </td>
             <td style="padding: 12px;">
@@ -141,6 +141,15 @@ function renderPatientTable(patientList, container) {
                     <button class="btn-icon btn-icon-view btn-view-patient" data-id="${p.patientId}" title="View Details">
                         <i class="fa-solid fa-eye"></i>
                     </button>
+                    ${p.isActive !== false ? `
+                        <button class="btn-icon btn-icon-deactivate btn-deactivate-patient" data-id="${p.patientId}" data-name="${p.fullName}" title="Deactivate Patient">
+                            <i class="fa-solid fa-ban"></i>
+                        </button>
+                    ` : `
+                        <button class="btn-icon btn-icon-activate btn-activate-patient" data-id="${p.patientId}" data-name="${p.fullName}" title="Activate Patient">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    `}
                 </div>
             </td>
         </tr>
@@ -151,6 +160,44 @@ function renderPatientTable(patientList, container) {
   container.querySelectorAll(".btn-view-patient").forEach((btn) => {
     btn.onclick = () => showPatientDetails(btn.dataset.id, container);
   });
+
+  container.querySelectorAll(".btn-deactivate-patient").forEach((btn) => {
+    btn.onclick = () => deactivatePatient(btn.dataset.id, btn.dataset.name, container);
+  });
+
+  container.querySelectorAll(".btn-activate-patient").forEach((btn) => {
+    btn.onclick = () => activatePatient(btn.dataset.id, btn.dataset.name, container);
+  });
+}
+
+async function deactivatePatient(patientId, patientName, container) {
+  if (!confirm(`Are you sure you want to deactivate patient "${patientName}"?\n\nThis will archive the patient record. The patient and their associated user account will be deactivated.`)) {
+    return;
+  }
+
+  try {
+    await api.delete(`/patients/${patientId}`);
+    showToast(`Patient "${patientName}" deactivated successfully!`, "success");
+    const updated = await loadPatientData();
+    renderPatientTable(updated, container);
+  } catch (error) {
+    showToast("Error deactivating patient: " + error.message, "error");
+  }
+}
+
+async function activatePatient(patientId, patientName, container) {
+  if (!confirm(`Are you sure you want to activate patient "${patientName}"?\n\nThis will restore the patient record.`)) {
+    return;
+  }
+
+  try {
+    await api.post(`/patients/${patientId}/activate`);
+    showToast(`Patient "${patientName}" activated successfully!`, "success");
+    const updated = await loadPatientData();
+    renderPatientTable(updated, container);
+  } catch (error) {
+    showToast("Error activating patient: " + error.message, "error");
+  }
 }
 
 function setupPatientEvents(container, getAllPatientsFn) {

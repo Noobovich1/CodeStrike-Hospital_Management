@@ -70,8 +70,15 @@ public class Bill {
     @Enumerated(EnumType.ORDINAL)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
+    @Column(name = "bill_status")
+    @Enumerated(EnumType.ORDINAL)
+    private BillStatus billStatus = BillStatus.ACTIVE;
+
     @Column(name = "paid_amount")
     private java.math.BigDecimal paidAmount = java.math.BigDecimal.ZERO;
+
+    @Column(name = "refund_amount")
+    private java.math.BigDecimal refundAmount = java.math.BigDecimal.ZERO;
 
     @Column(name = "generated_at")
     private LocalDateTime generatedAt;

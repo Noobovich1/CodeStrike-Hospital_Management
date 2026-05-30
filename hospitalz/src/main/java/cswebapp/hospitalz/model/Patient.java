@@ -57,6 +57,9 @@ public class Patient {
     @Enumerated(EnumType.ORDINAL)
     private PatientStatus status = PatientStatus.OUTPATIENT;
 
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
     private User user;
@@ -64,6 +67,9 @@ public class Patient {
     @PrePersist
     @PreUpdate
     private void validateFields() {
+        if (isActive == null) {
+            isActive = true;
+        }
         if (email != null && !email.isBlank()) {
             if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")) {
                 throw new IllegalArgumentException("Invalid email format: " + email);

@@ -43,6 +43,17 @@ public class Room {
     @Enumerated(EnumType.ORDINAL)
     private RoomStatus status = RoomStatus.AVAILABLE;
 
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @PrePersist
+    @PreUpdate
+    private void validateAndSetDefaults() {
+        if (isActive == null) {
+            isActive = true;
+        }
+    }
 }

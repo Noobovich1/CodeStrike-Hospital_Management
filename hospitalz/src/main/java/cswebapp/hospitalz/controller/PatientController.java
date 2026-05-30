@@ -2,6 +2,7 @@ package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
 import cswebapp.hospitalz.dto.PatientProfileUpdateRequest;
+import cswebapp.hospitalz.exception.ResourceNotFoundException;
 import cswebapp.hospitalz.model.Patient;
 import cswebapp.hospitalz.repository.PatientRepository;
 import cswebapp.hospitalz.repository.UserRepository;
@@ -156,5 +157,27 @@ public class PatientController {
         String diseaseDesc = payload.get("diseaseDescription");
         String treatmentNotes = payload.get("currentTreatmentNotes");
         return ResponseEntity.ok(patientService.updateClinicalDetails(id, diseaseDesc, treatmentNotes));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deactivatePatient(@PathVariable String id) {
+        try {
+            patientService.deactivatePatient(id);
+            return ResponseEntity.ok(Map.of("message", "Patient deactivated successfully"));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> activatePatient(@PathVariable String id) {
+        try {
+            patientService.activatePatient(id);
+            return ResponseEntity.ok(Map.of("message", "Patient activated successfully"));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
     }
 }

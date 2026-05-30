@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
@@ -59,5 +60,19 @@ public class RoomController {
             @PathVariable Long roomId,
             @RequestParam RoomStatus status) {
         return ResponseEntity.ok(roomService.setRoomStatus(roomId, status));
+    }
+
+    @DeleteMapping("/{roomId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deactivateRoom(@PathVariable Long roomId) {
+        roomService.deactivateRoom(roomId);
+        return ResponseEntity.ok(Map.of("message", "Room deactivated successfully"));
+    }
+
+    @PostMapping("/{roomId}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> activateRoom(@PathVariable Long roomId) {
+        roomService.activateRoom(roomId);
+        return ResponseEntity.ok(Map.of("message", "Room activated successfully"));
     }
 }

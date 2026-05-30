@@ -1,10 +1,13 @@
 package cswebapp.hospitalz.service;
 
 import cswebapp.hospitalz.model.Patient;
+import cswebapp.hospitalz.model.User;
 import cswebapp.hospitalz.repository.PatientRepository;
+import cswebapp.hospitalz.repository.UserRepository;
 import cswebapp.hospitalz.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +17,9 @@ public class PatientService {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public Patient registerNewPatient(Patient patient) {
         String uniqueId = "PAT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -40,5 +46,27 @@ public class PatientService {
             patient.setCurrentTreatmentNotes(currentTreatmentNotes);
         }
         return patientRepository.save(patient);
+    }
+
+    @Transactional
+    public void deactivatePatient(String patientId) {
+        Patient existing = getPatientById(patientId);
+        existing.setIsActive(false);
+        patientRepository.save(existing);
+        if (existing.getUser() != null) {
+            existing.getUser().setActive(false);
+            userRepository.save(existing.getUser());
+        }
+    }
+
+    @Transactional
+    public void activatePatient(String patientId) {
+        Patient existing = getPatientById(patientId);
+        existing.setIsActive(true);
+        patientRepository.save(existing);
+        if (existing.getUser() != null) {
+            existing.getUser().setActive(true);
+            userRepository.save(existing.getUser());
+        }
     }
 }

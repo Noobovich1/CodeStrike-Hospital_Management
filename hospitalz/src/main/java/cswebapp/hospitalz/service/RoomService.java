@@ -6,6 +6,7 @@ import cswebapp.hospitalz.model.RoomType;
 import cswebapp.hospitalz.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -89,5 +90,22 @@ public class RoomService {
         }
 
         roomRepository.save(room);
+    }
+
+    @Transactional
+    public void deactivateRoom(Long roomId) {
+        Room existing = getRoomById(roomId);
+        if (existing.getCurrentOccupancy() > 0) {
+            throw new RuntimeException("Cannot deactivate room with patients still assigned");
+        }
+        existing.setIsActive(false);
+        roomRepository.save(existing);
+    }
+
+    @Transactional
+    public void activateRoom(Long roomId) {
+        Room existing = getRoomById(roomId);
+        existing.setIsActive(true);
+        roomRepository.save(existing);
     }
 }
