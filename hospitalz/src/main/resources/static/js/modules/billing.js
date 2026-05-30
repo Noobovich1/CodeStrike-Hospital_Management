@@ -1,12 +1,14 @@
 import { api } from '../api.js';
 
+const getStorageItem = (key) => localStorage.getItem(key) || sessionStorage.getItem(key);
+
 let currentPage = 0;
 let currentSearch = '';
 const PAGE_SIZE = 50;
 
 export async function renderBilling() {
     const container = document.createElement('div');
-    const role = localStorage.getItem('role') || sessionStorage.getItem('role') || '';
+    const role = getStorageItem('role') || '';
     const isAdmin = role === 'ADMIN';
     const isPatient = role === 'PATIENT';
     
@@ -179,8 +181,8 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
     const prevBtn = container.querySelector('#btn-prev-page');
     const nextBtn = container.querySelector('#btn-next-page');
     const pageInfo = container.querySelector('#bills-page-info');
-    const isPatient = (localStorage.getItem('role') || sessionStorage.getItem('role')) === 'PATIENT';
-    const patientId = localStorage.getItem('patientId');
+    const isPatient = getStorageItem('role') === 'PATIENT';
+    const patientId = getStorageItem('patientId');
 
     try {
         let bills = [];
@@ -436,7 +438,7 @@ async function showBillDetails(billId, container) {
         
         container.querySelector('#btn-download-pdf').onclick = async () => {
             try {
-                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const token = getStorageItem('token');
                 const response = await fetch(`/api/v1/bills/${billId}/pdf`, {
                     method: 'GET',
                     headers: {
@@ -480,7 +482,7 @@ async function showBillDetails(billId, container) {
 }
 
 function setupBillingEvents(container, isAdmin) {
-    const isPatient = (localStorage.getItem('role') || sessionStorage.getItem('role')) === 'PATIENT';
+    const isPatient = getStorageItem('role') === 'PATIENT';
     // Đóng Modal chi tiết hóa đơn (Dùng chung)
     container.querySelector('#close-bill-modal').onclick = () => {
         container.querySelector('#bill-modal').style.display = 'none';
@@ -757,7 +759,7 @@ function setupBillingEvents(container, isAdmin) {
 }
 
 async function requestPatch(endpoint) {
-    const token = localStorage.getItem('token');
+    const token = getStorageItem('token');
     const response = await fetch('/api/v1' + endpoint, {
         method: 'PATCH',
         headers: {
