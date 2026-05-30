@@ -99,10 +99,14 @@ function renderSidebar() {
     const config = roleConfig[currentRole];
     sidebarNav.innerHTML = '';
     
-    config.menu.forEach((item, index) => {
+    const savedTabId = sessionStorage.getItem('activeTab');
+    const isValidTab = config.menu.some(m => m.id === savedTabId);
+    const activeTabId = isValidTab ? savedTabId : (config.menu[0]?.id || '');
+    
+    config.menu.forEach((item) => {
         const a = document.createElement('a');
         a.href = '#';
-        a.className = `nav-item ${index === 0 ? 'active' : ''}`;
+        a.className = `nav-item ${item.id === activeTabId ? 'active' : ''}`;
         a.innerHTML = `<i class="fa-solid ${item.icon}"></i> <span>${item.label}</span>`;
         
         a.addEventListener('click', (e) => {
@@ -121,6 +125,7 @@ function renderSidebar() {
 
 // --- Content Loading ---
 async function loadModule(moduleId, moduleTitle) {
+    sessionStorage.setItem('activeTab', moduleId);
     pageTitle.textContent = moduleTitle;
     contentArea.innerHTML = `<div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>`;
 
@@ -315,11 +320,17 @@ function init() {
     
     // Initial render
     renderSidebar();
-    const firstModule = roleConfig[currentRole]?.menu[0];
-    if (firstModule) {
-        loadModule(firstModule.id, firstModule.label);
+    const savedTabId = sessionStorage.getItem('activeTab');
+    const savedTab = roleConfig[currentRole]?.menu.find(m => m.id === savedTabId);
+    if (savedTab) {
+        loadModule(savedTab.id, savedTab.label);
     } else {
-        loadModule('dashboard', 'Dashboard');
+        const firstModule = roleConfig[currentRole]?.menu[0];
+        if (firstModule) {
+            loadModule(firstModule.id, firstModule.label);
+        } else {
+            loadModule('dashboard', 'Dashboard');
+        }
     }
 }
 
