@@ -60,7 +60,7 @@ export async function renderRoomList() {
                     </div>
                     <form id="room-form">
                         <input type="hidden" id="room-id-val">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="grid-2-col" style="margin-bottom: 16px;">
                             <div>
                                 <label style="display: block; margin-bottom: 4px;">Room Number *</label>
                                 <input type="text" id="room-number" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">

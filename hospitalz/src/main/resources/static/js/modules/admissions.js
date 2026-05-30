@@ -90,7 +90,7 @@ export async function renderActiveAdmissions() {
                         <button id="close-admit-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                     </div>
                     <form id="admit-form">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="grid-2-col" style="margin-bottom: 16px;">
                             <div>
                                 <label style="display: block; margin-bottom: 4px;">Search Patient *</label>
                                 <input type="text" id="admit-patient-search" placeholder="Type name, ID or phone..." required
@@ -127,7 +127,7 @@ export async function renderActiveAdmissions() {
                         <button id="close-assign-doc-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                     </div>
                     <form id="assign-doc-form">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="grid-2-col" style="margin-bottom: 16px;">
                             <div>
                                 <label style="display: block; margin-bottom: 4px;">Search Inpatient *</label>
                                 <input type="text" id="assign-patient-search" placeholder="Enter name/phone/ID..."
@@ -176,7 +176,7 @@ export async function renderActiveAdmissions() {
                     <div style="margin-bottom: 12px;">
                         <p><strong>Patient:</strong> <span id="vitals-patient-name">-</span></p>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div class="grid-2-col" style="gap: 12px; margin-bottom: 16px;">
                         <div>
                             <label style="display: block; font-size: 0.85em; margin-bottom: 4px;">Blood Pressure (mmHg)</label>
                             <input type="text" id="vitals-bp" placeholder="e.g. 120/80" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
@@ -241,7 +241,7 @@ export async function renderActiveAdmissions() {
                         <button id="close-transport-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                     </div>
                     <form id="transport-form">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="grid-2-col" style="margin-bottom: 16px;">
                             <div>
                                 <label style="display: block; margin-bottom: 4px;">Search Admitted Patient *</label>
                                 <input type="text" id="transport-patient-search" placeholder="Type name, ID or phone..." required

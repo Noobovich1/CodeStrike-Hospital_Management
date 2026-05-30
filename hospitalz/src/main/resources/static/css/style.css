@@ -262,6 +262,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-width: 0;
 }
 
 .topbar {
@@ -989,3 +990,37 @@ body {
         transform: scaleX(0);
     }
 }
+
+/* Responsive Form/Content Grid Utilities */
+.grid-2-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.grid-1-2-col {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 20px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 767px) {
+    .grid-2-col, .grid-1-2-col {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
