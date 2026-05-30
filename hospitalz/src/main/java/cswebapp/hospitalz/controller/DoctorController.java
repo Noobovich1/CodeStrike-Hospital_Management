@@ -63,4 +63,11 @@ public class DoctorController {
         doctorService.deactivateDoctor(doctorId);
         return ResponseEntity.ok("Doctor " + doctorId + " deactivated successfully.");
     }
+
+    @PostMapping("/{doctorId}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> activateDoctor(@PathVariable String doctorId) {
+        doctorService.activateDoctor(doctorId);
+        return ResponseEntity.ok("Doctor " + doctorId + " activated successfully.");
+    }
 }

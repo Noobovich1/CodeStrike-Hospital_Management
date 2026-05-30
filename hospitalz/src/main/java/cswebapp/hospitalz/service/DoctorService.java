@@ -89,9 +89,25 @@ public class DoctorService {
     }
 
     // Soft delete — never hard delete doctors (billing history depends on them)
+    @Transactional
     public void deactivateDoctor(String doctorId) {
         Doctor existing = getDoctorById(doctorId);
         existing.setIsActive(false);
         doctorRepository.save(existing);
+        if (existing.getUser() != null) {
+            existing.getUser().setActive(false);
+            userRepository.save(existing.getUser());
+        }
+    }
+
+    @Transactional
+    public void activateDoctor(String doctorId) {
+        Doctor existing = getDoctorById(doctorId);
+        existing.setIsActive(true);
+        doctorRepository.save(existing);
+        if (existing.getUser() != null) {
+            existing.getUser().setActive(true);
+            userRepository.save(existing.getUser());
+        }
     }
 }

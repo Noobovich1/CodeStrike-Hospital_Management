@@ -208,6 +208,9 @@ async function loadStaffData(container) {
         }
         tbody.innerHTML = list.map(s => {
             const statusColor = s.isActive ? 'var(--status-success)' : 'var(--text-secondary)';
+            const actionLabel = s.isActive ? 'Deactivate' : 'Activate';
+            const actionIcon = s.isActive ? 'fa-user-slash' : 'fa-user-check';
+            const actionColor = s.isActive ? 'var(--status-danger)' : 'var(--status-success)';
             return `
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px;">${s.staffId || '-'}</td>
@@ -222,8 +225,8 @@ async function loadStaffData(container) {
                             <button class="btn-icon btn-icon-view btn-edit-staff" data-id="${s.staffId}" title="Edit Staff">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-icon btn-deactivate-staff" data-id="${s.staffId}" title="Deactivate/Delete Staff">
-                                <i class="fa-solid fa-user-slash" style="color: var(--status-danger);"></i>
+                            <button class="btn-icon btn-toggle-staff-status" data-id="${s.staffId}" data-active="${s.isActive ? 'true' : 'false'}" title="${actionLabel} Staff">
+                                <i class="fa-solid ${actionIcon}" style="color: ${actionColor};"></i>
                             </button>
                         </div>
                     </td>
@@ -238,16 +241,23 @@ async function loadStaffData(container) {
             };
         });
 
-        container.querySelectorAll('.btn-deactivate-staff').forEach(btn => {
+        container.querySelectorAll('.btn-toggle-staff-status').forEach(btn => {
             btn.onclick = async () => {
                 const staffId = btn.dataset.id;
-                if (confirm(`Are you sure you want to deactivate staff ID ${staffId}?`)) {
+                const isActive = btn.dataset.active === 'true';
+                const actionText = isActive ? 'deactivate' : 'activate';
+                if (confirm(`Are you sure you want to ${actionText} staff ID ${staffId}?`)) {
                     try {
-                        await api.delete(`/staff/${staffId}`);
-                        showToast('Staff deactivated successfully!', 'success');
-                        loadStaffData();
+                        if (isActive) {
+                            await api.delete(`/staff/${staffId}`);
+                            showToast('Staff deactivated successfully!', 'success');
+                        } else {
+                            await api.post(`/staff/${staffId}/activate`);
+                            showToast('Staff activated successfully!', 'success');
+                        }
+                        loadStaffData(container);
                     } catch (error) {
-                        showToast('Error deactivating staff: ' + error.message, 'error');
+                        showToast(`Error updating staff status: ${error.message}`, 'error');
                     }
                 }
             };
@@ -269,6 +279,9 @@ async function loadDoctorData(container) {
         }
         tbody.innerHTML = list.map(d => {
             const statusColor = d.isActive ? 'var(--status-success)' : 'var(--text-secondary)';
+            const actionLabel = d.isActive ? 'Deactivate' : 'Activate';
+            const actionIcon = d.isActive ? 'fa-user-slash' : 'fa-user-check';
+            const actionColor = d.isActive ? 'var(--status-danger)' : 'var(--status-success)';
             return `
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px;">${d.doctorId || '-'}</td>
@@ -282,8 +295,8 @@ async function loadDoctorData(container) {
                             <button class="btn-icon btn-icon-view btn-edit-doc" data-id="${d.doctorId}" title="Edit Doctor">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-icon btn-deactivate-doc" data-id="${d.doctorId}" title="Deactivate/Delete Doctor">
-                                <i class="fa-solid fa-user-slash" style="color: var(--status-danger);"></i>
+                            <button class="btn-icon btn-toggle-doc-status" data-id="${d.doctorId}" data-active="${d.isActive ? 'true' : 'false'}" title="${actionLabel} Doctor">
+                                <i class="fa-solid ${actionIcon}" style="color: ${actionColor};"></i>
                             </button>
                         </div>
                     </td>
@@ -298,16 +311,23 @@ async function loadDoctorData(container) {
             };
         });
 
-        container.querySelectorAll('.btn-deactivate-doc').forEach(btn => {
+        container.querySelectorAll('.btn-toggle-doc-status').forEach(btn => {
             btn.onclick = async () => {
                 const doctorId = btn.dataset.id;
-                if (confirm(`Are you sure you want to deactivate doctor ID ${doctorId}?`)) {
+                const isActive = btn.dataset.active === 'true';
+                const actionText = isActive ? 'deactivate' : 'activate';
+                if (confirm(`Are you sure you want to ${actionText} doctor ID ${doctorId}?`)) {
                     try {
-                        await api.delete(`/doctors/${doctorId}`);
-                        showToast('Doctor deactivated successfully!', 'success');
-                        loadDoctorData();
+                        if (isActive) {
+                            await api.delete(`/doctors/${doctorId}`);
+                            showToast('Doctor deactivated successfully!', 'success');
+                        } else {
+                            await api.post(`/doctors/${doctorId}/activate`);
+                            showToast('Doctor activated successfully!', 'success');
+                        }
+                        loadDoctorData(container);
                     } catch (error) {
-                        showToast('Error deactivating doctor: ' + error.message, 'error');
+                        showToast(`Error updating doctor status: ${error.message}`, 'error');
                     }
                 }
             };

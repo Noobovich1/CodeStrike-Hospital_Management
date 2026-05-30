@@ -76,4 +76,10 @@ public class StaffController {
         staffService.deactivateStaff(staffId);
         return ResponseEntity.ok("Staff " + staffId + " deactivated.");
     }
+
+    @PostMapping("/{staffId}/activate")
+    public ResponseEntity<String> activateStaff(@PathVariable String staffId) {
+        staffService.activateStaff(staffId);
+        return ResponseEntity.ok("Staff " + staffId + " activated.");
+    }
 }

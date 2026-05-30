@@ -114,9 +114,25 @@ public class StaffService {
         return staffRepository.save(existing);
     }
 
+    @Transactional
     public void deactivateStaff(String staffId) {
         Staff existing = getStaffById(staffId);
         existing.setIsActive(false);
         staffRepository.save(existing);
+        if (existing.getUser() != null) {
+            existing.getUser().setActive(false);
+            userRepository.save(existing.getUser());
+        }
+    }
+
+    @Transactional
+    public void activateStaff(String staffId) {
+        Staff existing = getStaffById(staffId);
+        existing.setIsActive(true);
+        staffRepository.save(existing);
+        if (existing.getUser() != null) {
+            existing.getUser().setActive(true);
+            userRepository.save(existing.getUser());
+        }
     }
 }
