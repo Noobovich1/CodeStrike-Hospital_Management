@@ -1,7 +1,12 @@
 import { api } from "../api.js";
 
+const PAGE_SIZE = 20;
+
 export async function renderRegisterForm() {
   const container = document.createElement("div");
+
+  // Sort state: { field, direction }
+  const sortState = { field: null, direction: "asc" };
 
   container.innerHTML = `
         <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
@@ -20,7 +25,7 @@ export async function renderRegisterForm() {
                     <thead>
                         <tr style="border-bottom: 2px solid var(--border-color);">
                             <th style="padding: 12px;">ID</th>
-                            <th style="padding: 12px;">Name</th>
+                            <th style="padding: 12px; cursor: pointer; user-select: none;" id="th-name">Name <i class="fa-solid fa-sort" style="margin-left: 4px; font-size: 0.75em; opacity: 0.5;"></i></th>
                             <th style="padding: 12px;">Gender</th>
                             <th style="padding: 12px;">Phone</th>
                             <th style="padding: 12px;">Status</th>
@@ -32,6 +37,7 @@ export async function renderRegisterForm() {
                     </tbody>
                 </table>
             </div>
+            <div id="patient-pagination" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);"></div>
         </div>
 
         <!-- Register Patient Pop-up Modal -->
@@ -94,12 +100,31 @@ export async function renderRegisterForm() {
 
   setTimeout(() => {
     let allPatients = [];
+    let currentPage = 1;
+
+    function renderAll() {
+      renderPatientTableWithPagination(allPatients, container, sortState, currentPage, (newPage) => {
+        currentPage = newPage;
+        renderAll();
+      });
+    }
+
     loadPatientData().then((data) => {
       allPatients = data || [];
-      renderPatientTable(allPatients, container);
+      renderAll();
     });
 
-    setupPatientEvents(container, () => allPatients);
+    setupPatientEvents(container, () => allPatients, sortState, () => {
+      currentPage = 1;
+      renderAll();
+    });
+
+    // Listen for data changes from activate/deactivate actions
+    container.addEventListener("patient-data-changed", async () => {
+      const updated = await loadPatientData();
+      allPatients = updated || [];
+      renderAll();
+    });
   }, 0);
 
   return container;
@@ -114,16 +139,90 @@ async function loadPatientData() {
   }
 }
 
-function renderPatientTable(patientList, container) {
+function sortPatients(patientList, sortState) {
+  if (!patientList || patientList.length === 0) return patientList;
+  
+  const sorted = [...patientList];
+  
+  // Always sort: active first, inactive to bottom
+  sorted.sort((a, b) => {
+    const aActive = a.isActive !== false ? 1 : 0;
+    const bActive = b.isActive !== false ? 1 : 0;
+    if (aActive !== bActive) return bActive - aActive; // active (1) before inactive (0)
+    return 0;
+  });
+
+  // Then apply secondary sort by the chosen column
+  if (sortState && sortState.field) {
+    sorted.sort((a, b) => {
+      const aActive = a.isActive !== false ? 1 : 0;
+      const bActive = b.isActive !== false ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive; // keep active/inactive grouping
+
+      let valA, valB;
+      if (sortState.field === "name") {
+        valA = (a.fullName || "").toLowerCase();
+        valB = (b.fullName || "").toLowerCase();
+      } else if (sortState.field === "id") {
+        valA = (a.patientId || "").toLowerCase();
+        valB = (b.patientId || "").toLowerCase();
+      } else if (sortState.field === "phone") {
+        valA = (a.phoneNumber || "").toLowerCase();
+        valB = (b.phoneNumber || "").toLowerCase();
+      } else {
+        return 0;
+      }
+
+      if (valA < valB) return sortState.direction === "asc" ? -1 : 1;
+      if (valA > valB) return sortState.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
+
+  return sorted;
+}
+
+function renderPatientTableWithPagination(patientList, container, sortState, currentPage, onPageChange) {
+  const tbody = container.querySelector("#patient-table-body");
+  const pagEl = container.querySelector("#patient-pagination");
+  if (!tbody) return;
+
+  const sorted = sortPatients(patientList, sortState);
+
+  if (!sorted || sorted.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">No patients found.</td></tr>`;
+    if (pagEl) pagEl.innerHTML = "";
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const startIdx = (currentPage - 1) * PAGE_SIZE;
+  const paged = sorted.slice(startIdx, startIdx + PAGE_SIZE);
+
+  renderPatientTableRows(paged, container, sortState);
+  renderPatientPagination(sorted.length, totalPages, currentPage, pagEl, onPageChange);
+}
+
+function renderPatientTable(patientList, container, sortState) {
   const tbody = container.querySelector("#patient-table-body");
   if (!tbody) return;
 
   if (!patientList || patientList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">No patients found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">No patients found.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = patientList
+  const sorted = sortPatients(patientList, sortState);
+
+  renderPatientTableRows(sorted, container, sortState);
+}
+
+function renderPatientTableRows(sorted, container, sortState) {
+  const tbody = container.querySelector("#patient-table-body");
+  if (!tbody) return;
+
+  tbody.innerHTML = sorted
     .map(
       (p) => `
         <tr style="border-bottom: 1px solid var(--border-color); ${p.isActive === false ? 'opacity: 0.6; background: var(--bg-secondary);' : ''}">
@@ -170,6 +269,49 @@ function renderPatientTable(patientList, container) {
   });
 }
 
+function renderPatientPagination(totalItems, totalPages, currentPage, pagEl, onPageChange) {
+  if (!pagEl) return;
+  if (totalItems <= PAGE_SIZE) {
+    pagEl.innerHTML = `<span style="color: var(--text-secondary); font-size: 0.85em;">Showing ${totalItems} of ${totalItems}</span>`;
+    return;
+  }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+  let btns = '';
+  const disabledStyle = 'opacity:0.4;cursor:default;padding:6px 10px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-secondary);color:var(--text-primary);font-size:0.85em;';
+  const normalStyle = 'padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 0.85em;';
+
+  btns += `<button class="pg-btn" data-page="1" style="${currentPage === 1 ? disabledStyle : normalStyle}" ${currentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-angles-left"></i></button>`;
+  btns += `<button class="pg-btn" data-page="${currentPage - 1}" style="${currentPage === 1 ? disabledStyle : normalStyle}" ${currentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
+
+  const maxVisible = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+  if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const isActive = i === currentPage;
+    btns += `<button class="pg-btn" data-page="${i}" style="padding: 6px 12px; border: 1px solid ${isActive ? 'var(--accent-primary)' : 'var(--border-color)'}; border-radius: 4px; background: ${isActive ? 'var(--accent-primary)' : 'var(--bg-secondary)'}; color: ${isActive ? 'white' : 'var(--text-primary)'}; cursor: pointer; font-size: 0.85em; font-weight: ${isActive ? '700' : '400'};">${i}</button>`;
+  }
+
+  btns += `<button class="pg-btn" data-page="${currentPage + 1}" style="${currentPage === totalPages ? disabledStyle : normalStyle}" ${currentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
+  btns += `<button class="pg-btn" data-page="${totalPages}" style="${currentPage === totalPages ? disabledStyle : normalStyle}" ${currentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-angles-right"></i></button>`;
+
+  pagEl.innerHTML = `
+    <span style="color: var(--text-secondary); font-size: 0.85em; margin-right: 8px;">${start}–${end} of ${totalItems}</span>
+    ${btns}
+  `;
+
+  pagEl.querySelectorAll('.pg-btn').forEach(btn => {
+    if (btn.disabled) return;
+    btn.addEventListener('click', () => {
+      onPageChange(parseInt(btn.dataset.page));
+    });
+  });
+}
+
 async function deactivatePatient(patientId, patientName, container) {
   if (!confirm(`Are you sure you want to deactivate patient "${patientName}"?\n\nThis will archive the patient record. The patient and their associated user account will be deactivated.`)) {
     return;
@@ -178,8 +320,8 @@ async function deactivatePatient(patientId, patientName, container) {
   try {
     await api.delete(`/patients/${patientId}`);
     showToast(`Patient "${patientName}" deactivated successfully!`, "success");
-    const updated = await loadPatientData();
-    renderPatientTable(updated, container);
+    // Trigger a full refresh via the custom event
+    container.dispatchEvent(new CustomEvent("patient-data-changed"));
   } catch (error) {
     showToast("Error deactivating patient: " + error.message, "error");
   }
@@ -193,31 +335,58 @@ async function activatePatient(patientId, patientName, container) {
   try {
     await api.post(`/patients/${patientId}/activate`);
     showToast(`Patient "${patientName}" activated successfully!`, "success");
-    const updated = await loadPatientData();
-    renderPatientTable(updated, container);
+    container.dispatchEvent(new CustomEvent("patient-data-changed"));
   } catch (error) {
     showToast("Error activating patient: " + error.message, "error");
   }
 }
 
-function setupPatientEvents(container, getAllPatientsFn) {
+function setupPatientEvents(container, getAllPatientsFn, sortState, onDataChanged) {
   const btnRegister = container.querySelector("#btn-register-patient");
   const regModal = container.querySelector("#patient-reg-modal");
   const btnCancel = container.querySelector("#btn-cancel-patient");
   const btnCloseReg = container.querySelector("#close-patient-reg-modal");
   const form = container.querySelector("#patient-form");
   const searchInput = container.querySelector("#patient-search");
+  const thName = container.querySelector("#th-name");
+
+  // Helper: re-render with current search filter and sort (resets to page 1)
+  function rerenderFiltered() {
+    const query = searchInput.value.toLowerCase();
+    const allPatients = getAllPatientsFn();
+    const source = query
+      ? allPatients.filter(
+          (p) =>
+            (p.fullName && p.fullName.toLowerCase().includes(query)) ||
+            (p.phoneNumber && p.phoneNumber.includes(query)) ||
+            (p.patientId && p.patientId.toLowerCase().includes(query)),
+        )
+      : allPatients;
+    onDataChanged && onDataChanged();
+  }
+
+  // Name column sort toggle
+  thName.addEventListener("click", () => {
+    if (sortState.field === "name") {
+      sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+    } else {
+      sortState.field = "name";
+      sortState.direction = "asc";
+    }
+    // Update sort icon
+    const icon = thName.querySelector("i");
+    if (sortState.direction === "asc") {
+      icon.className = "fa-solid fa-sort-up";
+    } else {
+      icon.className = "fa-solid fa-sort-down";
+    }
+    icon.style.opacity = "1";
+
+    rerenderFiltered();
+  });
 
   searchInput.addEventListener("input", (e) => {
-    const query = e.target.value.toLowerCase();
-    const allPatients = getAllPatientsFn();
-    const filtered = allPatients.filter(
-      (p) =>
-        (p.fullName && p.fullName.toLowerCase().includes(query)) ||
-        (p.phoneNumber && p.phoneNumber.includes(query)) ||
-        (p.patientId && p.patientId.toLowerCase().includes(query)),
-    );
-    renderPatientTable(filtered, container);
+    onDataChanged && onDataChanged();
   });
 
   btnRegister.addEventListener("click", () => {
@@ -249,9 +418,8 @@ function setupPatientEvents(container, getAllPatientsFn) {
       await api.post("/patients", payload);
       showToast("Patient registered successfully!", "success");
       closeRegModal();
-      const updated = await loadPatientData();
-      renderPatientTable(updated, container);
       searchInput.value = "";
+      onDataChanged && onDataChanged();
     } catch (error) {
       showToast("Error: " + error.message, "error");
     }

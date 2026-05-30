@@ -24,7 +24,7 @@ public class RoomService {
     }
 
     public List<Room> getAllRooms() {
-        return roomRepository.findAll();
+        return roomRepository.findAllByOrderByIsActiveDesc();
     }
 
     public Room getRoomById(Long roomId) {

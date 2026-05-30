@@ -2,8 +2,10 @@ package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.model.Bill;
 import cswebapp.hospitalz.dto.PaymentRequest;
+import cswebapp.hospitalz.dto.RefundRequest;
 import cswebapp.hospitalz.service.BillService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -120,8 +122,14 @@ public class BillController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
-    public ResponseEntity<List<Bill>> getAllBills() {
-        return ResponseEntity.ok(billService.getAllBills());
+    public ResponseEntity<?> getAllBills(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String search) {
+        if (search != null && !search.isBlank()) {
+            return ResponseEntity.ok(billService.searchBills(search, page, size));
+        }
+        return ResponseEntity.ok(billService.getBillsPaginated(page, size));
     }
 
     @GetMapping("/{billId}/pdf")
@@ -163,8 +171,8 @@ public class BillController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> refundBill(
             @PathVariable Long billId,
-            @RequestBody java.math.BigDecimal refundAmount) {
-        billService.refundBill(billId, refundAmount);
+            @RequestBody RefundRequest request) {
+        billService.refundBill(billId, request.getAmount());
         return ResponseEntity.ok(Map.of("message", "Bill refunded successfully"));
     }
 }

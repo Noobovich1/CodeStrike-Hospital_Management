@@ -12,6 +12,11 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 @Service
 public class BillService {
 
@@ -237,6 +242,18 @@ public class BillService {
         return billRepository.save(bill);
     }
 
+    // ── PAGINATED QUERIES ──────────────────────────────────────────────────
+    public Page<Bill> getBillsPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "billStatus")
+                .and(Sort.by(Sort.Direction.DESC, "billId")));
+        return billRepository.findAllWithPatient(pageable);
+    }
+
+    public Page<Bill> searchBills(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "billId"));
+        return billRepository.searchBills(query, pageable);
+    }
+
     // ── QUERIES ────────────────────────────────────────────────────────────
     public Bill getBillById(Long billId) {
         return billRepository.findById(billId)
@@ -253,7 +270,7 @@ public class BillService {
     }
 
     public List<Bill> getAllBills() {
-        return billRepository.findAll();
+        return billRepository.findAllByOrderByBillStatusAsc();
     }
 
     // ── EXPORT BILL TO PDF ──────────────────────────────────────────────────

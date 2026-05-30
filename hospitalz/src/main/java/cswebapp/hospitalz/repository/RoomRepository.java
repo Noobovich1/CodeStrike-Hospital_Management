@@ -33,4 +33,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
        @Query("SELECT COUNT(r) FROM Room r WHERE r.status = cswebapp.hospitalz.model.RoomStatus.AVAILABLE " +
                       "AND r.currentOccupancy < r.capacity")
        long countAllAvailableRooms();
+
+       // Get all rooms sorted: active first, then inactive
+       List<Room> findAllByOrderByIsActiveDesc();
 }

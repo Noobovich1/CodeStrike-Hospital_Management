@@ -1,5 +1,9 @@
 import { api } from '../api.js';
 
+let currentPage = 0;
+let currentSearch = '';
+const PAGE_SIZE = 50;
+
 export async function renderBilling() {
     const container = document.createElement('div');
     const role = localStorage.getItem('role') || sessionStorage.getItem('role') || '';
@@ -85,6 +89,19 @@ export async function renderBilling() {
         </div>
 
         <!-- Record Payment Pop-up Modal -->
+        <!-- Pagination Controls -->
+        <div id="bills-pagination" style="display: none; justify-content: space-between; align-items: center; padding: 12px 0; gap: 12px; flex-wrap: wrap;">
+            <span id="bills-page-info" style="color: var(--text-secondary); font-size: 0.9em;"></span>
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-prev-page" style="padding: 6px 14px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; display: none;">
+                    <i class="fa-solid fa-chevron-left"></i> Previous
+                </button>
+                <button id="btn-next-page" style="padding: 6px 14px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; display: none;">
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
         <div id="pay-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
             <div class="glass-panel" style="background: var(--bg-primary); width: 90%; max-width: 450px; padding: 24px; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
@@ -147,6 +164,8 @@ export async function renderBilling() {
     `;
 
     setTimeout(() => {
+        currentPage = 0;
+        currentSearch = '';
         loadBillsData(container, isAdmin);
         setupBillingEvents(container, isAdmin);
     }, 0);
@@ -156,11 +175,17 @@ export async function renderBilling() {
 
 async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = '') {
     const tbody = container.querySelector('#bills-table-body');
+    const pagination = container.querySelector('#bills-pagination');
+    const prevBtn = container.querySelector('#btn-prev-page');
+    const nextBtn = container.querySelector('#btn-next-page');
+    const pageInfo = container.querySelector('#bills-page-info');
     const isPatient = (localStorage.getItem('role') || sessionStorage.getItem('role')) === 'PATIENT';
     const patientId = localStorage.getItem('patientId');
 
     try {
         let bills = [];
+        let totalPages = 0;
+        let totalElements = 0;
         
         if (isPatient) {
             if (patientId) {
@@ -175,7 +200,15 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
             const bill = await api.get(`/bills/admission/${searchId}`);
             bills = bill ? [bill] : [];
         } else {
-            bills = await api.get('/bills');
+            const searchParam = currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : '';
+            const response = await api.get(`/bills?page=${currentPage}&size=${PAGE_SIZE}${searchParam}`);
+            if (response && response.content) {
+                bills = response.content;
+                totalPages = response.totalPages || 0;
+                totalElements = response.totalElements || 0;
+            } else {
+                bills = response || [];
+            }
         }
         
         if (bills && !Array.isArray(bills)) {
@@ -184,7 +217,18 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
 
         if (!bills || bills.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">No bills found.</td></tr>`;
+            pagination.style.display = 'none';
             return;
+        }
+
+        // Show/hide pagination for non-patient views
+        if (!isPatient && totalPages > 0) {
+            pagination.style.display = 'flex';
+            prevBtn.style.display = currentPage > 0 ? 'inline-block' : 'none';
+            nextBtn.style.display = currentPage < totalPages - 1 ? 'inline-block' : 'none';
+            pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages} (${totalElements} bills)`;
+        } else {
+            pagination.style.display = 'none';
         }
 
         tbody.innerHTML = bills.map(b => {
@@ -251,7 +295,25 @@ async function loadBillsData(container, isAdmin, searchType = 'ALL', searchId = 
             container.querySelector('#pay-modal').style.display = 'flex';
         });
         
-        if (isAdmin) {
+    // Pagination controls
+    const prevBtn = container.querySelector('#btn-prev-page');
+    const nextBtn = container.querySelector('#btn-next-page');
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            if (currentPage > 0) {
+                currentPage--;
+                loadBillsData(container, isAdmin);
+            }
+        };
+    }
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            currentPage++;
+            loadBillsData(container, isAdmin);
+        };
+    }
+
+    if (isAdmin) {
             container.querySelectorAll('.btn-disc-bill').forEach(btn => btn.onclick = () => {
                 container.querySelector('#disc-bill-id').value = btn.dataset.id;
                 container.querySelector('#discount-modal').style.display = 'flex';

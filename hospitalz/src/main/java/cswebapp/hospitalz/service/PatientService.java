@@ -29,7 +29,7 @@ public class PatientService {
     }
 
     public List<Patient> getAllPatients() {
-        return patientRepository.findAll();
+        return patientRepository.findAllByOrderByIsActiveDesc();
     }
 
     public Patient getPatientById(String patientId) {

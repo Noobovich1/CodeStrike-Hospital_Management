@@ -1,6 +1,7 @@
 package cswebapp.hospitalz.controller;
 
 import cswebapp.hospitalz.config.JwtService;
+import cswebapp.hospitalz.dto.AdminPasswordResetRequest;
 import cswebapp.hospitalz.dto.ChangePasswordRequest;
 import cswebapp.hospitalz.dto.RoleUpdateRequest;
 import cswebapp.hospitalz.model.User;
@@ -36,7 +37,23 @@ public class UserController {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
-    // Admin cập nhật Role cho tài khoản
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+        return ResponseEntity.ok(Map.of(
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "role", user.getRole().name(),
+                "active", user.isActive(),
+                "createdAt", user.getCreatedAt(),
+                "updatedAt", user.getUpdatedAt()
+        ));
+    }
+
     @PatchMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUserRole(@PathVariable Long id, @RequestBody RoleUpdateRequest request) {
@@ -55,7 +72,6 @@ public class UserController {
         }
     }
 
-    // Khóa / Mở khóa tài khoản
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
@@ -75,7 +91,6 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Account " + status + " successfully", "active", active));
     }
 
-    // Tạo tài khoản Receptionist (User-only, không có record trong staff)
     @PostMapping("/receptionist")
     @PreAuthorize("hasRole('ADMIN')")
     public synchronized ResponseEntity<?> createReceptionist() {
@@ -101,12 +116,40 @@ public class UserController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "Receptionist account created successfully",
+                "id", newUser.getId(),
                 "username", username,
                 "defaultPassword", "Pass1234"
         ));
     }
 
-    // Đổi mật khẩu tài khoản hiện tại
+    @PatchMapping("/{id}/reset-password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> adminResetPassword(@PathVariable Long id, @RequestBody AdminPasswordResetRequest request) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New password is required"));
+        }
+
+        if (!request.getNewPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d\\W]{8,}$")) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Password must be at least 8 characters, and include at least one uppercase letter, one lowercase letter, and one number."));
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "New password must be different from the current password."));
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully for user: " + user.getUsername()));
+    }
+
     @PatchMapping("/me/password")
     public ResponseEntity<?> changePassword(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -138,7 +181,10 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("error", "Incorrect current password"));
         }
 
-        // Validate mật khẩu mới theo regex
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New password must be different from current password."));
+        }
+
         if (!request.getNewPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d\\W]{8,}$")) {
             return ResponseEntity.badRequest().body(Map.of("error",
                     "Password must be at least 8 characters, and include at least one uppercase letter, one lowercase letter, and one number."));
@@ -150,4 +196,4 @@ public class UserController {
 
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
-}
+}
