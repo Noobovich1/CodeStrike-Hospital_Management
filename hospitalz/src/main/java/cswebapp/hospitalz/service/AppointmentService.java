@@ -64,10 +64,10 @@ public class AppointmentService {
                     + ") does not match appointment specialisation (" + appointment.getSpecialisation() + ").");
         }
 
-        // Check if doctor has a scheduling conflict (+/- 30 minutes)
-        LocalDateTime start = appointment.getAppointmentDate().minusMinutes(29);
-        LocalDateTime end = appointment.getAppointmentDate().plusMinutes(29);
-        boolean isBusy = appointmentRepository.existsByDoctor_DoctorIdAndStatusNotAndAppointmentDateBetween(
+        // Check if doctor has a scheduling conflict (+/- 30 minutes, exclusive range check)
+        LocalDateTime start = appointment.getAppointmentDate().minusMinutes(30);
+        LocalDateTime end = appointment.getAppointmentDate().plusMinutes(30);
+        boolean isBusy = appointmentRepository.existsByDoctor_DoctorIdAndStatusNotAndAppointmentDateAfterAndAppointmentDateBefore(
                 doctorId, AppointmentStatus.CANCELLED, start, end);
 
         if (isBusy) {
