@@ -374,14 +374,14 @@ async function loadActiveAdmissions(container, isNurse) {
                     if (confirm('Discharge patient with admission ID ' + id + '? The bill will be generated automatically.')) {
                         try {
                             await api.put(`/admissions/${id}/discharge`);
-                            alert('Patient discharged successfully!');
+                            showToast('Patient discharged successfully!', 'success');
                             loadActiveAdmissions(container, isNurse);
                             if (isReceptionist) {
                                 loadHistoryAdmissions(container);
                                 loadAvailableRooms(container);
                             }
                         } catch (error) {
-                            alert('Discharge error: ' + error.message);
+                            showToast('Discharge error: ' + error.message, 'error');
                         }
                     }
                 });
@@ -462,10 +462,10 @@ async function loadPatientChecklist(container, patientId) {
                 if (confirm('Confirm this treatment order has been administered?')) {
                     try {
                         await api.put(`/treatment-records/${id}/notes`, { notes: updatedNotes });
-                        alert('Treatment order status updated successfully!');
+                        showToast('Treatment order status updated successfully!', 'success');
                         loadPatientChecklist(container, btn.dataset.patient);
                     } catch (err) {
-                        alert('Update error: ' + err.message);
+                        showToast('Update error: ' + err.message, 'error');
                     }
                 }
             };
@@ -547,10 +547,10 @@ function setupAdmissionsEvents(container, isNurse) {
 
             try {
                 await api.post('/vitals', payload);
-                alert('Vitals saved successfully!');
+                showToast('Vitals saved successfully!', 'success');
                 closeVitalsModal();
             } catch (err) {
-                alert('Error saving vitals: ' + err.message);
+                showToast('Error saving vitals: ' + err.message, 'error');
             }
         };
 
@@ -773,7 +773,7 @@ function setupAdmissionsEvents(container, isNurse) {
         const patientIdSelect = container.querySelector('#admit-patient-id');
         const patientId = patientIdSelect.value;
         if (!patientId) {
-            alert('Please search and select a patient first.');
+            showToast('Please search and select a patient first.', 'warning');
             container.querySelector('#admit-patient-search').focus();
             return;
         }
@@ -784,12 +784,12 @@ function setupAdmissionsEvents(container, isNurse) {
         };
         try {
             await api.post('/admissions', payload);
-            alert('Patient admitted successfully!');
+            showToast('Patient admitted successfully!', 'success');
             closeAdmit();
             loadActiveAdmissions(container, isNurse);
             loadAvailableRooms(container);
         } catch (err) {
-            alert('Error: ' + err.message);
+            showToast('Error: ' + err.message, 'error');
         }
     };
 
@@ -801,14 +801,14 @@ function setupAdmissionsEvents(container, isNurse) {
         const patientId = patientSelect.value;
 
         if (!patientId) {
-            alert('Please search and select an inpatient first.');
+            showToast('Please search and select an inpatient first.', 'warning');
             container.querySelector('#assign-patient-search').focus();
             return;
         }
 
         const doctorId = container.querySelector('#assign-doc-id').value;
         if (!doctorId) {
-            alert('Please select a doctor.');
+            showToast('Please select a doctor.', 'warning');
             return;
         }
 
@@ -821,10 +821,10 @@ function setupAdmissionsEvents(container, isNurse) {
 
         try {
             await api.post('/doctor-patient', payload);
-            alert('Doctor assigned successfully!');
+            showToast('Doctor assigned successfully!', 'success');
             closeAssign();
         } catch (err) {
-            alert('Error: ' + err.message);
+            showToast('Error: ' + err.message, 'error');
         }
     };
 
@@ -912,7 +912,7 @@ function setupAdmissionsEvents(container, isNurse) {
             e.preventDefault();
             const patientId = patientSelect.value;
             if (!patientId) {
-                alert('Please search and select an admitted patient first.');
+                showToast('Please search and select an admitted patient first.', 'warning');
                 searchInput.focus();
                 return;
             }
@@ -929,10 +929,10 @@ function setupAdmissionsEvents(container, isNurse) {
 
             try {
                 await api.post('/transport-tasks', payload);
-                alert('Transport request submitted successfully!');
+                showToast('Transport request submitted successfully!', 'success');
                 closeTransportModal();
             } catch (err) {
-                alert('Error submitting transport request: ' + err.message);
+                showToast('Error submitting transport request: ' + err.message, 'error');
             }
         };
     }

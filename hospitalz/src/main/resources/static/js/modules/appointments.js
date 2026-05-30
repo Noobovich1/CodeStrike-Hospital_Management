@@ -249,10 +249,10 @@ async function loadAppointments(container, isPatient, isDoctor, isReceptionist) 
                 if (confirm('Mark appointment ID ' + id + ' as COMPLETED? This will freeze the visit and allow generating the bill.')) {
                     try {
                         await api.put(`/appointments/${id}/status?status=COMPLETED`);
-                        alert('Appointment completed!');
+                        showToast('Appointment completed!', 'success');
                         loadAppointments(container, isPatient, isDoctor, isReceptionist);
                     } catch (error) {
-                        alert('Error: ' + error.message);
+                        showToast('Error: ' + error.message, 'error');
                     }
                 }
             };
@@ -264,10 +264,10 @@ async function loadAppointments(container, isPatient, isDoctor, isReceptionist) 
                 if (confirm('Generate outpatient bill for appointment ID ' + id + '?')) {
                     try {
                         await api.post(`/bills/generate/outpatient/${id}`);
-                        alert('Outpatient bill generated successfully!');
+                        showToast('Outpatient bill generated successfully!', 'success');
                         loadAppointments(container, isPatient, isDoctor, isReceptionist);
                     } catch (error) {
-                        alert('Error: ' + error.message);
+                        showToast('Error: ' + error.message, 'error');
                     }
                 }
             };
@@ -279,10 +279,10 @@ async function loadAppointments(container, isPatient, isDoctor, isReceptionist) 
                 if (confirm('Cancel appointment ID ' + id + '?')) {
                     try {
                         await api.put(`/appointments/${id}/status?status=CANCELLED`);
-                        alert('Appointment cancelled!');
+                        showToast('Appointment cancelled!', 'success');
                         loadAppointments(container, isPatient, isDoctor, isReceptionist);
                     } catch (error) {
-                        alert('Error: ' + error.message);
+                        showToast('Error: ' + error.message, 'error');
                     }
                 }
             };
@@ -416,7 +416,7 @@ async function setupAppointmentsEvents(container, isPatient, isDoctor, isRecepti
         } else {
             patientId = patientIdSelect.value;
             if (!patientId) {
-                alert('Please search and select a patient first.');
+                showToast('Please search and select a patient first.', 'warning');
                 container.querySelector('#appt-patient-search').focus();
                 return;
             }
@@ -427,12 +427,12 @@ async function setupAppointmentsEvents(container, isPatient, isDoctor, isRecepti
         const notes = container.querySelector('#appt-notes').value;
 
         if (!spec) {
-            alert('Please select a specialty.');
+            showToast('Please select a specialty.', 'warning');
             return;
         }
 
         if (!apptDate) {
-            alert('Please select a date and time.');
+            showToast('Please select a date and time.', 'warning');
             return;
         }
 
@@ -445,11 +445,11 @@ async function setupAppointmentsEvents(container, isPatient, isDoctor, isRecepti
 
         try {
             await api.post('/appointments', payload);
-            alert('Appointment booked successfully!');
+            showToast('Appointment booked successfully!', 'success');
             closeModal();
             loadAppointments(container, isPatient, isDoctor, isReceptionist);
         } catch (error) {
-            alert('Error: ' + error.message);
+            showToast('Error: ' + error.message, 'error');
         }
     };
 
@@ -474,7 +474,7 @@ async function setupAppointmentsEvents(container, isPatient, isDoctor, isRecepti
             const doctorId = container.querySelector('#assign-doctor-select').value;
 
             if (!doctorId) {
-                alert('Please select a doctor.');
+                showToast('Please select a doctor.', 'warning');
                 return;
             }
 
@@ -493,11 +493,11 @@ async function setupAppointmentsEvents(container, isPatient, isDoctor, isRecepti
                     throw new Error(err.message || 'Scheduling conflict or validation error');
                 }
 
-                alert('Doctor assigned successfully!');
+                showToast('Doctor assigned successfully!', 'success');
                 closeAssignModal();
                 loadAppointments(container, isPatient, isDoctor, isReceptionist);
             } catch (error) {
-                alert('Error: ' + error.message);
+                showToast('Error: ' + error.message, 'error');
             }
         };
     }
