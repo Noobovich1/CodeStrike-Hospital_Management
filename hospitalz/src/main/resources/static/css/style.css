@@ -359,7 +359,7 @@ body {
 /* Dashboard Grid Component */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 24px;
     margin-bottom: 32px;
 }
@@ -555,10 +555,42 @@ body {
 
     .content-area {
         padding: 16px;
+        overflow-x: hidden;
     }
 
     .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+        min-width: 0;
+    }
+
+    .stat-info h3 {
+        font-size: 0.78em;
+        margin-bottom: 4px;
+    }
+
+    .stat-value {
+        font-size: 1.3rem;
+    }
+
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+
+    .charts-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .charts-grid .glass-panel {
+        min-width: 0;
+        overflow: hidden;
     }
 
     .topbar-right {
@@ -1000,26 +1032,26 @@ body {
 /* Progress Bar Styling (fix for light/dark mode) */
 progress {
     width: 60px;
-    height: 8px;
-    border-radius: 4px;
+    height: 5px;
+    border-radius: 3px;
     border: none;
     overflow: hidden;
 }
 
 progress::-webkit-progress-bar {
     background-color: var(--progress-track);
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 progress::-webkit-progress-value {
-    background-color: var(--progress-fill);
-    border-radius: 4px;
+    background-color: var(--accent-primary);
+    border-radius: 3px;
     transition: width 0.3s ease;
 }
 
 progress::-moz-progress-bar {
-    background-color: var(--progress-fill);
-    border-radius: 4px;
+    background-color: var(--accent-primary);
+    border-radius: 3px;
     transition: width 0.3s ease;
 }
 
@@ -1053,6 +1085,44 @@ progress::-moz-progress-bar {
     .grid-2-col, .grid-1-2-col {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    /* Force stat cards into 2-column compact grid */
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        padding: 14px 12px !important;
+        min-width: 0;
+    }
+
+    .stat-info h3 {
+        font-size: 0.72em;
+        margin-bottom: 2px;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .stat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .charts-grid .glass-panel {
+        min-width: 0;
+        overflow: hidden;
     }
 }
 
