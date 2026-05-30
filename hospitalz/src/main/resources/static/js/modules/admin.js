@@ -46,7 +46,7 @@ export async function renderAdminDashboard() {
             </div>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        <div class="charts-grid" style="margin-bottom: 24px;">
             <div class="glass-panel" style="padding: 24px;">
                 <h3 style="margin-bottom: 20px; font-weight: 600;">Room Occupancy</h3>
                 <canvas id="occupancyChart"></canvas>

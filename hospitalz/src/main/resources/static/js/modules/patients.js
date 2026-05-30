@@ -42,7 +42,7 @@ export async function renderRegisterForm() {
                     <button id="close-patient-reg-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                 </div>
                 <form id="patient-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="grid-2-col" style="margin-bottom: 16px;">
                         <div>
                             <label style="display: block; margin-bottom: 4px;">Full Name *</label>
                             <input type="text" id="patient-name" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
@@ -233,7 +233,7 @@ async function showPatientDetails(patientId, container) {
       .catch(() => []);
 
     content.innerHTML = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+            <div class="grid-2-col" style="margin-bottom: 24px;">
                 <div>
                     <p><strong>Name:</strong> ${patient.fullName}</p>
                     <p><strong>DOB:</strong> ${patient.dateOfBirth}</p>
@@ -316,7 +316,7 @@ export async function renderDoctorPatientList() {
                     <button id="close-doc-patient-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="grid-2-col" style="gap: 20px; margin-bottom: 20px;">
                     <!-- Demographics info -->
                     <div style="background: rgba(100,116,139,0.03); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
                         <h4 style="margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--accent-primary);">Administrative Information</h4>
@@ -349,7 +349,7 @@ export async function renderDoctorPatientList() {
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
+                <div class="grid-1-2-col" style="gap: 20px;">
                     <!-- Treatment History -->
                     <div>
                         <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--accent-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">Treatment & Orders History</h4>

@@ -48,7 +48,7 @@ export async function renderPatientRecords() {
           <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
             <i class="fa-solid fa-id-card" style="color: var(--accent-primary);"></i> Personal Information
           </h3>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="grid-2-col" style="gap: 16px;">
             <div>
               <p style="color: var(--text-secondary); font-size: 0.85em; margin: 0;">Date of Birth</p>
               <p id="patient-record-dob" style="font-weight: 500; margin: 4px 0 12px 0;">-</p>

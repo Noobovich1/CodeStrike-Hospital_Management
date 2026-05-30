@@ -85,7 +85,7 @@ export async function renderTreatments() {
                     <button id="close-prescribe-modal" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary);">&times;</button>
                 </div>
                 <form id="prescribe-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="grid-2-col" style="margin-bottom: 16px;">
                         <div style="${currentDoctorId ? 'grid-column: span 2;' : ''}">
                             <label style="display: block; margin-bottom: 4px;">Search Patient *</label>
                             <input type="text" id="presc-patient-search" placeholder="Type name, ID or phone..." required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); outline: none; margin-bottom: 4px;">
@@ -132,7 +132,7 @@ export async function renderTreatments() {
                 </div>
                 <form id="treatment-form">
                     <input type="hidden" id="treatment-id-val">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="grid-2-col" style="margin-bottom: 16px;">
                         <div>
                             <label style="display: block; margin-bottom: 4px;">Treatment Name *</label>
                             <input type="text" id="treatment-name" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
