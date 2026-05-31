@@ -63,11 +63,11 @@ The system uses **stateless JWT-based authentication** with role-based access co
 | Security | Spring Security | 6.x |
 | Authentication | JWT (io.jsonwebtoken / jjwt) | HS256 |
 | Password Hashing | BCryptPasswordEncoder | Strength 10 |
-| ORM | Spring Data JPA + Hibernate | — |
+| ORM | Spring Data JPA + Hibernate | - |
 | Database | MySQL | 8.0 |
 | Build Tool | Apache Maven | 3.9.15 |
 | Frontend | HTML5 + CSS3 + Vanilla JavaScript | SPA (no framework) |
-| Deployment | Railway | — |
+| Deployment | Railway | - |
 
 ---
 
@@ -86,20 +86,20 @@ Before running this project, ensure you have the following installed:
 
 ## Setup Instructions
 
-### Step 1 — Clone the repository
+### Step 1 - Clone the repository
 
 ```bash
 git clone https://github.com/CodeStrike/CodeStrike-Hospital_Management.git
 cd CodeStrike-Hospital_Management/hospitalz
 ```
 
-### Step 2 — Create the MySQL database
+### Step 2 - Create the MySQL database
 
 ```sql
 CREATE DATABASE hospital_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
 
-### Step 3 — Import the schema and seed data
+### Step 3 - Import the schema and seed data
 
 ```bash
 mysql -u root -p hospital_db < database/schema.sql
@@ -107,7 +107,7 @@ mysql -u root -p hospital_db < database/schema.sql
 
 This imports all tables and pre-populates test data including users, patients, doctors, rooms, staff, appointments, and bills.
 
-### Step 4 — Configure your local database connection
+### Step 4 - Configure your local database connection
 
 Create a local properties file (already in `.gitignore`):
 
@@ -125,7 +125,7 @@ spring.datasource.password=YOUR_MYSQL_PASSWORD
 jwt.secret=YOUR_256BIT_BASE64_SECRET
 ```
 
-### Step 5 — Build the project
+### Step 5 - Build the project
 
 ```bash
 ./mvnw clean install -DskipTests
@@ -242,7 +242,7 @@ The following accounts are pre-seeded in `database/schema.sql` for testing:
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 
 
