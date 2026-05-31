@@ -103,7 +103,16 @@ export async function renderRegisterForm() {
     let currentPage = 1;
 
     function renderAll() {
-      renderPatientTableWithPagination(allPatients, container, sortState, currentPage, (newPage) => {
+      const searchInput = container.querySelector('#patient-search');
+      const query = searchInput ? searchInput.value.toLowerCase() : '';
+      const filtered = query
+        ? allPatients.filter(p =>
+            (p.fullName && p.fullName.toLowerCase().includes(query)) ||
+            (p.phoneNumber && p.phoneNumber.includes(query)) ||
+            (p.patientId && p.patientId.toLowerCase().includes(query))
+          )
+        : allPatients;
+      renderPatientTableWithPagination(filtered, container, sortState, currentPage, (newPage) => {
         currentPage = newPage;
         renderAll();
       });
