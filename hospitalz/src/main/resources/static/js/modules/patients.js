@@ -618,6 +618,30 @@ export async function renderDoctorPatientList() {
                         </form>
                     </div>
                 </div>
+
+                <!-- Patient Vitals History -->
+                <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--accent-primary); display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-heart-pulse" style="color: var(--status-danger);"></i> Patient Vitals History
+                    </h4>
+                    <div style="overflow-x: auto; max-height: 200px;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85em;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                                    <th style="padding: 8px;">Record Date</th>
+                                    <th style="padding: 8px;">Blood Pressure</th>
+                                    <th style="padding: 8px;">Temperature</th>
+                                    <th style="padding: 8px;">Pulse</th>
+                                    <th style="padding: 8px;">Oxygen Level (SpO2)</th>
+                                    <th style="padding: 8px;">Recorded By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="doc-p-vitals-history">
+                                <tr><td colspan="6" style="text-align: center; padding: 10px;">No vitals data available</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -713,6 +737,9 @@ export async function renderDoctorPatientList() {
         // Load treatment history
         await loadTreatmentHistory(patientId);
 
+        // Load vitals history
+        await loadVitalsHistory(patientId);
+
         // Load master active treatments for select list
         await loadActiveTreatmentsDropdown();
 
@@ -740,6 +767,38 @@ export async function renderDoctorPatientList() {
         `).join("");
       } catch (err) {
         histBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color: var(--status-danger);">Error loading treatment history.</td></tr>';
+      }
+    }
+
+    async function loadVitalsHistory(patientId) {
+      const vitalsBody = container.querySelector("#doc-p-vitals-history");
+      vitalsBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 10px;">Loading vitals...</td></tr>';
+      try {
+        const vitals = await api.get(`/vitals/patient/${patientId}`);
+        if (!vitals || vitals.length === 0) {
+          vitalsBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 10px; color: var(--text-secondary);">No vitals records logged yet.</td></tr>';
+          return;
+        }
+        vitalsBody.innerHTML = vitals.map(v => {
+          const bp = v.bloodPressure || "-";
+          const temp = v.temperature ? `${v.temperature.toFixed(1)} °C` : "-";
+          const pulse = v.pulse ? `${v.pulse} bpm` : "-";
+          const oxygen = v.oxygenLevel ? `${v.oxygenLevel}%` : "-";
+          const byNurse = v.recordedBy || "-";
+          const dateStr = v.recordedAt ? new Date(v.recordedAt).toLocaleString() : "-";
+          return `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+              <td style="padding: 8px;">${dateStr}</td>
+              <td style="padding: 8px; font-weight: 500;">${bp}</td>
+              <td style="padding: 8px;">${temp}</td>
+              <td style="padding: 8px;">${pulse}</td>
+              <td style="padding: 8px;">${oxygen}</td>
+              <td style="padding: 8px; color: var(--text-secondary);">${byNurse}</td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        vitalsBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 10px; color: var(--status-danger);">Error loading vitals history.</td></tr>';
       }
     }
 
