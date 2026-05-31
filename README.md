@@ -9,7 +9,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#-overview)
 - [Features](#-features)
@@ -23,7 +23,7 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
 **Hospital Management System** is a full-stack web application developed by team **CodeStrike** to digitize and streamline core hospital workflows — from patient registration and appointment scheduling to billing, treatment tracking, and real-time vitals monitoring.
 
@@ -37,20 +37,20 @@
 
 ---
 
-## ✨ Features
+## Features
 
-### 🔐 Authentication & Security
+### Authentication & Security
 - JWT stateless authentication with role-based access control
 - BCrypt password hashing (strength factor 10)
 - Remember Me session: 24-hour standard / 30-day persistent
 - Tamper-proof tokens — HS256 signature invalidates any payload modification
 
-### 👤 User & Staff Management
+### User & Staff Management
 - Multi-role user system (Admin, Doctor, Nurse, Ward Boy, Patient)
 - Staff scheduling with shift and ward assignment
 - Secure password change endpoint
 
-### 🏥 Clinical Operations
+### Clinical Operations
 - Patient registration, records, and status tracking
 - Doctor–patient assignment workflow
 - Appointment scheduling with status management
@@ -59,14 +59,14 @@
 - Treatment plans and treatment record logging
 - Vitals monitoring: blood pressure, temperature, pulse, SpO₂
 
-### 💰 Administrative
+### Administrative
 - Billing and payment management
 - Transport task coordination (Ward Boy)
 - Admin dashboard with system-wide statistics
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ```
 Backend     │ Java 21, Spring Boot 3, Spring Data JPA, Hibernate
@@ -79,7 +79,7 @@ Deployment  │ Railway (cloud MySQL)
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 hospitalz/
@@ -121,7 +121,7 @@ hospitalz/
 
 ---
 
-## 👥 Roles & Permissions
+## Roles & Permissions
 
 | Role | Access Level |
 |------|-------------|
@@ -133,7 +133,7 @@ hospitalz/
 
 ---
 
-## 🔒 Security Design
+## Security Design
 
 ### Authentication Flow
 
@@ -207,7 +207,7 @@ GET    /api/v1/staff/**
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
