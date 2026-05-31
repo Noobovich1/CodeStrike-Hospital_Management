@@ -374,14 +374,16 @@ async function loadActiveAdmissions(container, isNurse) {
                     if (confirm('Discharge patient with admission ID ' + id + '? The bill will be generated automatically.')) {
                         try {
                             await api.put(`/admissions/${id}/discharge`);
-                            showToast('Patient discharged successfully!', 'success');
+                            // Automatically generate the inpatient bill after successful discharge
+                            await api.post(`/bills/generate/${id}`);
+                            showToast('Patient discharged and bill generated successfully!', 'success');
                             loadActiveAdmissions(container, isNurse);
                             if (isReceptionist) {
                                 loadHistoryAdmissions(container);
                                 loadAvailableRooms(container);
                             }
                         } catch (error) {
-                            showToast('Discharge error: ' + error.message, 'error');
+                            showToast('Discharge/Billing error: ' + error.message, 'error');
                         }
                     }
                 });
@@ -546,7 +548,7 @@ function setupAdmissionsEvents(container, isNurse) {
             };
 
             try {
-                await api.post('/vitals', payload);
+                await api.post(`/vitals/${patientId}`, payload);
                 showToast('Vitals saved successfully!', 'success');
                 closeVitalsModal();
             } catch (err) {

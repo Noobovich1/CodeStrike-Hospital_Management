@@ -18,6 +18,8 @@ TRUNCATE TABLE treatment_records;
 TRUNCATE TABLE doctor_patient;
 TRUNCATE TABLE bills;
 TRUNCATE TABLE appointments;
+TRUNCATE TABLE transport_tasks;
+TRUNCATE TABLE vitals_logs;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
