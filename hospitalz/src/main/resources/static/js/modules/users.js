@@ -278,22 +278,25 @@ export async function renderUsersList() {
 
         function renderAll() {
             const filtered = getFilteredUsers();
-            const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-            if (currentPage > totalPages) currentPage = totalPages;
-            const startIdx = (currentPage - 1) * PAGE_SIZE;
-            const paged = filtered.slice(startIdx, startIdx + PAGE_SIZE);
 
             if (viewMode === 'role-compact') {
-                renderRoleCompactView(paged, container);
+                // Role compact view: show ALL users grouped by role (no pagination)
+                renderRoleCompactView(filtered, container);
                 container.querySelector('#role-compact-view').style.display = '';
                 container.querySelector('#table-view').style.display = 'none';
+                // Hide pagination in role compact view
+                container.querySelector('#users-pagination').innerHTML = `<span style="color: var(--text-secondary); font-size: 0.85em;">Showing ${filtered.length} of ${filtered.length} users</span>`;
             } else {
+                // Table view: paginate as before
+                const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+                if (currentPage > totalPages) currentPage = totalPages;
+                const startIdx = (currentPage - 1) * PAGE_SIZE;
+                const paged = filtered.slice(startIdx, startIdx + PAGE_SIZE);
                 renderTableView(paged, container);
                 container.querySelector('#role-compact-view').style.display = 'none';
                 container.querySelector('#table-view').style.display = '';
+                renderPagination(filtered.length, totalPages, container);
             }
-
-            renderPagination(filtered.length, totalPages, container);
         }
 
         function renderRoleCompactView(users, container) {
