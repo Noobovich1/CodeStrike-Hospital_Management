@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏥 Hospital Management System
+# Hospital Management System
 ### CodeStrike Team
 
 *A full-stack hospital operations platform with role-based access control, built with Spring Boot 3 and vanilla JavaScript.*
@@ -172,7 +172,7 @@ Incoming Request
 
 ---
 
-## 🌐 API Endpoints
+## API Endpoints
 
 ### Public
 ```
@@ -263,7 +263,7 @@ http://localhost:8080/auth.html
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -272,7 +272,7 @@ http://localhost:8080/auth.html
 | `DB_PASSWORD` | *(none)* | Database password |
 | `JWT_SECRET` | `404E6352...` | Base64-encoded HS256 key |
 
-> ⚠️ **Important:** Always override `JWT_SECRET` and `DB_PASSWORD` with strong values before deploying to production. Never commit `.env` or `application-local.properties` to version control.
+>  **Important:** Always override `JWT_SECRET` and `DB_PASSWORD` with strong values before deploying to production. Never commit `.env` or `application-local.properties` to version control.
 
 ---
 
