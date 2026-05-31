@@ -1,9 +1,9 @@
 <div align="center">
 
-# 🏥 Hospital Management System
-### CodeStrike Team
+# Hospital Management System
 
-*A full-stack hospital operations platform with role-based access control, built with Spring Boot 3 and vanilla JavaScript.*
+**A full-stack web application for managing core hospital operations**  
+Built with Spring Boot 3, Spring Security 6, JWT authentication, and Vanilla JavaScript.
 
 </div>
 
@@ -11,270 +11,263 @@
 
 ## Table of Contents
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Roles & Permissions](#-roles--permissions)
-- [Security Design](#-security-design)
-- [API Endpoints](#-api-endpoints)
-- [Getting Started](#-getting-started)
-- [Environment Variables](#-environment-variables)
+1. [Project Description](#-project-description)
+2. [Team Members & Roles](#-team-members--roles)
+3. [Technology Stack](#-technology-stack)
+4. [Prerequisites](#-prerequisites)
+5. [Setup Instructions](#-setup-instructions)
+6. [Environment Variables](#-environment-variables)
+7. [Running Locally](#-running-locally)
+8. [Running Tests](#-running-tests)
+9. [Known Issues & Limitations](#-known-issues--limitations)
+10. [Live Demo](#-live-demo)
+11. [Test Account Credentials](#-test-account-credentials)
+12. [Screenshots](#-screenshots)
 
 ---
 
-## Overview
+## Project Description
 
-**Hospital Management System** is a full-stack web application developed by team **CodeStrike** to digitize and streamline core hospital workflows — from patient registration and appointment scheduling to billing, treatment tracking, and real-time vitals monitoring.
+**Hospital Management System** digitalises and streamlines core hospital workflows including:
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Java 21 + Spring Boot 3 |
-| Security | Spring Security 6 + JWT (HS256) + BCrypt |
-| Frontend | Vanilla HTML / CSS / JavaScript (SPA) |
-| Database | MySQL 8.0 |
-| Build | Apache Maven 3.9 |
-
----
-
-## Features
-
-### Authentication & Security
-- JWT stateless authentication with role-based access control
-- BCrypt password hashing (strength factor 10)
-- Remember Me session: 24-hour standard / 30-day persistent
-- Tamper-proof tokens — HS256 signature invalidates any payload modification
-
-### User & Staff Management
-- Multi-role user system (Admin, Doctor, Nurse, Ward Boy, Patient)
-- Staff scheduling with shift and ward assignment
-- Secure password change endpoint
-
-### Clinical Operations
-- Patient registration, records, and status tracking
-- Doctor–patient assignment workflow
-- Appointment scheduling with status management
-- Room management — assign, transfer, discharge
-- Admission and discharge workflow
-- Treatment plans and treatment record logging
-- Vitals monitoring: blood pressure, temperature, pulse, SpO₂
-
-### Administrative
-- Billing and payment management
-- Transport task coordination (Ward Boy)
+- Patient registration, record management, and status tracking
+- Appointment scheduling and doctor–patient assignment
+- Room and admission management with full discharge workflow
+- Treatment plans, treatment records, and vitals monitoring (BP, temperature, pulse, SpO₂)
+- Billing, payment management, and invoice generation
+- Staff management (Nurses, Ward Boys) with shift and ward assignment
+- Transport task coordination
 - Admin dashboard with system-wide statistics
 
----
-
-## Tech Stack
-
-```
-Backend     │ Java 21, Spring Boot 3, Spring Data JPA, Hibernate
-Security    │ Spring Security 6, JWT (io.jsonwebtoken / jjwt), BCryptPasswordEncoder
-Database    │ MySQL 8.0
-Frontend    │ HTML5, CSS3, Vanilla JavaScript (SPA, no framework)
-Build       │ Apache Maven 3.9
-Deployment  │ Railway (cloud MySQL)
-```
+The system uses **stateless JWT-based authentication** with role-based access control across five distinct user roles.
 
 ---
 
-## Project Structure
+## Team Members & Roles
 
-```
-hospitalz/
-├── src/main/java/cswebapp/hospitalz/
-│   ├── config/
-│   │   ├── JwtAuthenticationFilter.java   # OncePerRequestFilter — validates JWT
-│   │   ├── JwtService.java                # Token generation & parsing (HS256)
-│   │   └── SecurityConfig.java            # Filter chain, CSRF off, STATELESS
-│   │
-│   ├── controller/
-│   │   ├── AuthController.java            # POST /api/v1/auth/login & /register
-│   │   ├── AdminController.java
-│   │   ├── PatientController.java
-│   │   ├── DoctorController.java
-│   │   ├── DoctorPatientController.java
-│   │   ├── AppointmentController.java
-│   │   ├── AdmissionController.java
-│   │   ├── RoomController.java
-│   │   ├── BillController.java
-│   │   ├── TreatmentController.java
-│   │   ├── TreatmentRecordController.java
-│   │   ├── VitalsLogController.java
-│   │   ├── StaffController.java
-│   │   ├── TransportTaskController.java
-│   │   ├── UserController.java
-│   │   └── HomeController.java
-│   │
-│   ├── model/                             # JPA Entities (Patient, Doctor, Room...)
-│   ├── repository/                        # Spring Data JPA Repositories
-│   └── dto/                              # LoginRequest, RegisterRequest...
-│
-├── src/main/resources/
-│   ├── application.properties
-│   └── static/                           # Frontend (HTML, CSS, JS)
-│
-└── database/
-    └── schema.sql                        # Full MySQL schema dump
-```
+| Name | Role | Responsibilities |
+|------|------|-----------------|
+| *Nguyễn Thế Khoa* | Team Lead & Backend | Backend: Spring Boot controllers, services, security, billing logic, PDF generation. |
+| *Phạm Song Gia Khánh* | Frontend Developer | Frontend: HTML, CSS, JavaScript, dashboard charts, UI consistency. |
+| *Nguyễn Hưng* | Backend Developer | Integration, SQL queries, seed data, documentation, testing coordination, database design. |
+| *Trần Đình Hưng* | Backend Developer | Testing, bug tracking, error handling and validation improvements, UI polish, and deployment setup. |
 
 ---
 
-## Roles & Permissions
+## Technology Stack
 
-| Role | Access Level |
-|------|-------------|
-| `ADMIN` | Full access — users, staff, rooms, all records, dashboard |
-| `DOCTOR` | Own patients, appointments, treatments, treatment records |
-| `NURSE` | Vitals recording, assigned ward patient management |
-| `WARD_BOY` | Transport task management |
-| `PATIENT` | Own appointments, records, bills |
-
----
-
-## Security Design
-
-### Authentication Flow
-
-```
-POST /api/v1/auth/login
-  → findByUsername()          # Query users table
-  → passwordEncoder.matches() # BCrypt verify
-  → isActive() check          # Account lock check
-  → jwtService.generateToken()# Issue HS256 JWT
-  → Return { token, role, username, profileId }
-```
-
-### Request Filter Flow
-
-```
-Incoming Request
-  → JwtAuthenticationFilter (OncePerRequestFilter)
-      ├─ No Bearer token   → chain.doFilter() [Spring Security enforces rules]
-      ├─ Valid token       → set SecurityContextHolder → chain.doFilter() → Controller
-      └─ Invalid/Expired   → catch silently → chain.doFilter() → Spring Security 401/403
-```
-
-### Token Configuration
-
-| Type | Lifetime | Storage |
-|------|----------|---------|
-| Standard | 24 hours (86,400,000 ms) | `sessionStorage` |
-| Remember Me | 30 days (2,592,000,000 ms) | `localStorage` |
-
-### Security Highlights
-- **Stateless** — `SessionCreationPolicy.STATELESS`, no server-side session
-- **CSRF disabled** — Bearer tokens in `Authorization` header are not CSRF-vulnerable
-- **Tamper detection** — Any modification to JWT payload invalidates HS256 signature
-- **Safe error handling** — Expired/malformed tokens caught silently, no stack trace exposed
-- **Password hashing** — BCrypt with salt round factor 10, never stored in plain text
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Language | Java | 21 |
+| Framework | Spring Boot | 3.x |
+| Security | Spring Security | 6.x |
+| Authentication | JWT (io.jsonwebtoken / jjwt) | HS256 |
+| Password Hashing | BCryptPasswordEncoder | Strength 10 |
+| ORM | Spring Data JPA + Hibernate | — |
+| Database | MySQL | 8.0 |
+| Build Tool | Apache Maven | 3.9.15 |
+| Frontend | HTML5 + CSS3 + Vanilla JavaScript | SPA (no framework) |
+| Deployment | Railway | — |
 
 ---
 
-## 🌐 API Endpoints
+## Prerequisites
 
-### Public
-```
-POST   /api/v1/auth/login
-POST   /api/v1/auth/register
-```
+Before running this project, ensure you have the following installed:
 
-### Authenticated (any valid role)
-```
-GET    /api/v1/patients
-POST   /api/v1/patients
-GET    /api/v1/patients/{id}
-GET    /api/v1/appointments
-POST   /api/v1/appointments
-GET    /api/v1/admissions
-POST   /api/v1/admissions
-GET    /api/v1/vitals
-POST   /api/v1/vitals
-GET    /api/v1/bills
-GET    /api/v1/rooms
-GET    /api/v1/treatments
-GET    /api/v1/doctors
-PATCH  /api/v1/users/me/password
-```
-
-### Admin Only
-```
-GET    /api/v1/admin/**
-GET    /api/v1/users/**
-GET    /api/v1/staff/**
-```
+| Tool | Minimum Version | Download |
+|------|----------------|----------|
+| Java JDK | 21 | https://adoptium.net |
+| Apache Maven | 3.9+ | https://maven.apache.org |
+| MySQL Server | 8.0+ | https://dev.mysql.com/downloads |
+| Git | Any | https://git-scm.com |
 
 ---
 
-## Getting Started
+## Setup Instructions
 
-### Prerequisites
-
-- Java 21+
-- Maven 3.9+
-- MySQL 8.0+
-
-### 1. Clone the repository
+### Step 1 — Clone the repository
 
 ```bash
 git clone https://github.com/CodeStrike/CodeStrike-Hospital_Management.git
 cd CodeStrike-Hospital_Management/hospitalz
 ```
 
-### 2. Set up the database
+### Step 2 — Create the MySQL database
 
 ```sql
-CREATE DATABASE hospital_db;
+CREATE DATABASE hospital_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
+
+### Step 3 — Import the schema and seed data
 
 ```bash
 mysql -u root -p hospital_db < database/schema.sql
 ```
 
-### 3. Configure environment
+This imports all tables and pre-populates test data including users, patients, doctors, rooms, staff, appointments, and bills.
 
-Copy and edit your local config:
+### Step 4 — Configure your local database connection
+
+Create a local properties file (already in `.gitignore`):
 
 ```bash
-cp src/main/resources/application.properties src/main/resources/application-local.properties
+cp src/main/resources/application.properties \
+   src/main/resources/application-local.properties
 ```
 
-Set your values:
+Then edit `application-local.properties`:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/hospital_db?serverTimezone=UTC
 spring.datasource.username=root
-spring.datasource.password=your_password
-jwt.secret=your_256bit_base64_secret
+spring.datasource.password=YOUR_MYSQL_PASSWORD
+jwt.secret=YOUR_256BIT_BASE64_SECRET
 ```
 
-### 4. Run the application
+### Step 5 — Build the project
 
 ```bash
+./mvnw clean install -DskipTests
+```
+
+---
+
+## Environment Variables
+
+| Variable | Default Value | Required | Description |
+|----------|--------------|----------|-------------|
+| `DB_URL` | `jdbc:mysql://localhost:3306/hospital_db?serverTimezone=UTC` | ✅ | MySQL JDBC connection URL |
+| `DB_USERNAME` | `root` | ✅ | Database username |
+| `DB_PASSWORD` | `NfbJikjeVwYPaDdRcOqGvvVSLLVoKAPS` | ✅ | Database password |
+| `JWT_SECRET` | `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970` | ✅ | Base64-encoded 256-bit HS256 signing key |
+
+
+---
+
+##  Running Locally
+
+### Using Maven Wrapper
+
+```bash
+cd hospitalz
 ./mvnw spring-boot:run
 ```
 
-### 5. Open in browser
+### Using environment variables (recommended for production)
+
+```bash
+DB_URL=jdbc:mysql://localhost:3306/hospital_db?serverTimezone=UTC \
+DB_USERNAME=root \
+DB_PASSWORD=yourpassword \
+JWT_SECRET=yoursecretkey \
+./mvnw spring-boot:run
+```
+
+### Access the application
+
+Once started, open your browser at:
 
 ```
-http://localhost:8080/auth.html
+http://localhost:8080
+```
+
+You will be redirected to the login page at `/auth.html`.
+
+---
+
+##  Running Tests
+
+### Run all tests
+
+```bash
+./mvnw test
+```
+
+### Run a specific test class
+
+```bash
+./mvnw test -Dtest=BCryptExample
+```
+
+### Manual API testing with curl
+
+**Login:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin_system", "password": "Admin@123", "rememberMe": false}'
+```
+
+**Access protected endpoint:**
+```bash
+curl http://localhost:8080/api/v1/patients \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ---
 
-## ⚙️ Environment Variables
+## Known Issues & Limitations
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_URL` | `jdbc:mysql://localhost:3306/hospital_db` | MySQL connection URL |
-| `DB_USERNAME` | `root` | Database username |
-| `DB_PASSWORD` | *(none)* | Database password |
-| `JWT_SECRET` | `404E6352...` | Base64-encoded HS256 key |
-
-> ⚠️ **Important:** Always override `JWT_SECRET` and `DB_PASSWORD` with strong values before deploying to production. Never commit `.env` or `application-local.properties` to version control.
+| # | Issue | Impact | Workaround |
+|---|-------|--------|------------|
+| 1 | No automated unit/integration test suite | Low test coverage | Manual testing via curl or browser |
+| 2 | `ddl-auto=update` enabled in dev | Risk of schema drift in prod | Switch to `validate` before deploying to production |
+| 3 | JWT has no server-side revocation | Logout only clears client storage; token remains valid until expiry | Acceptable for academic scope; production would need a token blacklist |
+| 4 | No pagination on large list endpoints | Slow response on large datasets | Planned for future iteration |
+| 5 | Frontend is a single-file SPA | No build step, but large JS files | Acceptable for current scope |
+| 6 | Railway free-tier database may sleep | Cold start delay ~5–10s on first request | Wait briefly after first load |
 
 ---
 
-> **Note:** `spring.jpa.hibernate.ddl-auto` is set to `update` for development convenience. Switch to `validate` or `none` in production to prevent unintended schema changes.
+##  Live Demo
 
+>  **Demo URL:**(https://codestrike-hospitalmanagement.up.railway.app/auth.html)
+
+
+---
+
+##  Test Account Credentials
+
+The following accounts are pre-seeded in `database/schema.sql` for testing:
+
+| Role | Username | Password | Access Level |
+|------|----------|----------|-------------|
+| **Admin** | `admin` | `pass` | Full system access, user & staff management |
+| **Receptionist** | `receptionist` | `pass` |
+| **Doctor** | `dr_an` | `pass` | Patients, appointments, treatments |
+| **Nurse** | `nurse_mai` | `pass` | Vitals recording, assigned ward |
+| **Ward Boy** | `wardboy_hoa` | `pass` | Transport task management |
+| **Patient** | `patient_lan` | `pass` | Own appointments, records, bills |
+
+---
+
+## 📸 Screenshots
+
+
+
+### Login Page
+![Login Page](screenshots/login.png)
+
+### Admin Dashboard
+![Admin Dashboard](screenshots/admin_dashboard.png)
+
+### Patient Management
+![Patient List](screenshots/patient_management.png)
+
+### Appointment Scheduling
+![Appointments](screenshots/appointment.png)
+
+### Vitals Monitoring
+![Vitals Log](screenshots/vitals.png)
+
+### Billing
+![Billing](screenshots/billing.png)
+
+---
+
+<div align="center">
+
+**CodeStrike Team** · Hospital Management System · 2024
+
+</div>
