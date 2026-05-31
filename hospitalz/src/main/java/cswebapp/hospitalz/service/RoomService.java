@@ -62,6 +62,12 @@ public class RoomService {
     public Room setRoomStatus(Long roomId, RoomStatus status) {
         Room room = getRoomById(roomId);
         room.setStatus(status);
+
+        // If restoring from MAINTENANCE, check if room is actually full
+        if (status == RoomStatus.AVAILABLE && room.getCurrentOccupancy() >= room.getCapacity()) {
+            room.setStatus(RoomStatus.OCCUPIED);
+        }
+
         return roomRepository.save(room);
     }
 
