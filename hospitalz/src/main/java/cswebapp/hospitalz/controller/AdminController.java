@@ -35,12 +35,10 @@ public class AdminController {
                 admissionRepository.countByStatus(AdmissionStatus.ACTIVE));
 
         // Available rooms count
-        stats.put("availableRooms",
-                roomRepository.countAllAvailableRooms());
+        stats.put("availableRooms",roomRepository.countAllAvailableRooms());
 
         // Active doctors count
-        stats.put("activeDoctors",
-                doctorRepository.countByIsActiveTrue());
+        stats.put("activeDoctors",doctorRepository.countByIsActiveTrue());
 
         // Total revenue from paid + partial bills
         stats.put("totalRevenue", billRepository.sumPaidAmount());
