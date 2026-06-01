@@ -18,7 +18,6 @@ export async function renderRoomList() {
                         <option value="ALL">All</option>
                         <option value="AVAILABLE">Available</option>
                         <option value="OCCUPIED">Occupied</option>
-                        <option value="FULL">Full</option>
                         <option value="MAINTENANCE">Maintenance Required</option>
                     </select>
                     ${isAdmin ? `
